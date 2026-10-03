@@ -152,7 +152,7 @@ platform :ios do
 
     # Build IPA
     build_app(
-      scheme: "iosApp",
+      scheme: "Koko",
       project: "iosApp/iosApp.xcodeproj",
       configuration: "Release",
       export_method: "app-store",
@@ -274,7 +274,7 @@ platform :ios do
     )
 
     build_app(
-      scheme: "iosApp",
+      scheme: "Koko",
       project: "iosApp/iosApp.xcodeproj",
       configuration: "Release",
       export_method: "app-store",

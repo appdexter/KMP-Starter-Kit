@@ -1,0 +1,94 @@
+name: Initialize Project from Template
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: "App Display Name (e.g. FoodDelivery)"
+        required: false
+        type: string
+      app_id:
+        description: "Application ID / Bundle ID (e.g. com.company.food)"
+        required: false
+        type: string
+
+jobs:
+  initialize:
+    name: Auto-configure project
+    # Safeguard: never run on the template repository itself
+    if: ${{ !endsWith(github.repository, '/kmp-contest-starter-kit') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Check if already initialized
+        id: check_status
+        run: |
+          set -euo pipefail
+          if ! grep -q 'rootProject\.name[[:space:]]*=[[:space:]]*"Koko"' MobileApp/settings.gradle.kts; then
+            echo "Project has already been initialized (rootProject.name is not 'Koko'). Skipping."
+            echo "already_initialized=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_initialized=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Derive App Name and App ID
+        if: steps.check_status.outputs.already_initialized == 'false'
+        run: |
+          set -euo pipefail
+          REPO_NAME="${{ github.event.repository.name }}"
+          APP_NAME="${{ inputs.app_name }}"
+          APP_ID="${{ inputs.app_id }}"
+
+          # Derive App Name (PascalCase, e.g. food-delivery -> FoodDelivery) if not specified
+          if [ -z "$APP_NAME" ]; then
+            APP_NAME=$(echo "$REPO_NAME" | perl -pe 's/(?:^|[-_])([a-zA-Z0-9])/\U$1/g')
+          fi
+
+          # Derive App ID (e.g. com.example.fooddelivery) if not specified
+          if [ -z "$APP_ID" ]; then
+            CLEAN_ID=$(echo "$REPO_NAME" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9' | sed -E 's/^[^a-z]+//')
+            [ -z "$CLEAN_ID" ] && CLEAN_ID="myapp"
+            APP_ID="com.example.${CLEAN_ID}"
+          fi
+
+          echo "Target App Name: $APP_NAME"
+          echo "Target App ID:   $APP_ID"
+          echo "APP_NAME=$APP_NAME" >> "$GITHUB_ENV"
+          echo "APP_ID=$APP_ID" >> "$GITHUB_ENV"
+
+      - name: Run initialization script
+        if: steps.check_status.outputs.already_initialized == 'false'
+        run: |
+          set -euo pipefail
+          chmod +x ./init.sh
+          ./init.sh --app-name "$APP_NAME" --app-id "$APP_ID" -y
+
+      - name: Remove template initialization workflow
+        if: steps.check_status.outputs.already_initialized == 'false'
+        run: |
+          rm -f .github/workflows/template_init.yml
+
+      - name: Commit and push changes
+        if: steps.check_status.outputs.already_initialized == 'false'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: initialize project as ${APP_NAME} (${APP_ID}) from template"
+            git push origin main
+          fi

@@ -354,6 +354,7 @@ update_app_name() {
     "shared/src/webMain/kotlin/$pkg_path/util/AppUtilImpl.web.kt"
     "settings.gradle.kts"
     "iosApp/iosApp.xcodeproj/project.pbxproj"
+    "fastlane/Fastfile"
   )
   for f in "${files[@]}"; do
     replace_in_file "$MOBILE_DIR/$f" "$OLD_APP_NAME" "$NEW_APP_NAME"
@@ -361,6 +362,14 @@ update_app_name() {
   for root in "$REPO_ROOT" "$MOBILE_DIR"; do
     replace_in_file "$root/.github/workflows/publish_ios_appstore.yml" "$OLD_APP_NAME" "$NEW_APP_NAME"
   done
+
+  # Rename Xcode shared scheme
+  local scheme_dir="$MOBILE_DIR/iosApp/iosApp.xcodeproj/xcshareddata/xcschemes"
+  if [ -f "$scheme_dir/$OLD_APP_NAME.xcscheme" ]; then
+    replace_in_file "$scheme_dir/$OLD_APP_NAME.xcscheme" "$OLD_APP_NAME.app" "$NEW_APP_NAME.app"
+    mv "$scheme_dir/$OLD_APP_NAME.xcscheme" "$scheme_dir/$NEW_APP_NAME.xcscheme"
+    echo "  updated Xcode scheme: $OLD_APP_NAME.xcscheme -> $NEW_APP_NAME.xcscheme"
+  fi
 }
 
 # Docs, agent guidelines, and script header comments reference the package both as a dotted id
