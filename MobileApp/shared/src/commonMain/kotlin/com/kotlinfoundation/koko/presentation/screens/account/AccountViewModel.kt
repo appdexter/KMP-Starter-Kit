@@ -46,7 +46,7 @@ class AccountViewModel(
         // Subscriptions row only when premium features are enabled.
         if (AppConfiguration.PREMIUM_FEATURES_ENABLED) add(subscriptionsItem)
         add(supportItem)
-        if (AppConfiguration.AUTH_SOCIAL_LOGIN_ENABLED && isSignedIn) add(logoutItem)
+        if (AppConfiguration.isAuthEnabled && AppConfiguration.AUTH_SOCIAL_LOGIN_ENABLED && isSignedIn) add(logoutItem)
     }
 
     private val _uiState = MutableStateFlow(AccountUiState())
@@ -57,8 +57,15 @@ class AccountViewModel(
             _uiState,
         ) { currentUser, currentSubscription, uiState ->
             val user = currentUser.getOrNull()
+            val effectiveUser = if (!AppConfiguration.isAuthEnabled) {
+                null
+            } else if (user?.isAnonymous == true && AppConfiguration.AUTH_SOCIAL_LOGIN_ENABLED) {
+                null
+            } else {
+                user
+            }
             uiState.copy(
-                user = if (user?.isAnonymous == true && AppConfiguration.AUTH_SOCIAL_LOGIN_ENABLED) null else user,
+                user = effectiveUser,
                 settingsItemList = settingsItemsFor(isSignedIn = user != null),
                 showUpgradePremiumBanner = AppConfiguration.PREMIUM_FEATURES_ENABLED && currentSubscription.isFree,
             )

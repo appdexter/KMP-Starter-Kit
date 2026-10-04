@@ -40,4 +40,16 @@ class FakeUserPreferences : UserPreferences {
     override suspend fun clear() {
         values.clear()
     }
+
+    override suspend fun hasSeenExitDownsell(): Boolean = getBoolean(UserPreferences.KEY_HAS_SEEN_EXIT_DOWNSELL, defaultValue = false)
+
+    override suspend fun setExitDownsellSeen(seen: Boolean) {
+        putBoolean(UserPreferences.KEY_HAS_SEEN_EXIT_DOWNSELL, seen)
+    }
+
+    override suspend fun getDownsellStartTimeMillis(): Long? = getLong(UserPreferences.KEY_DOWNSELL_START_TIME_MILLIS)
+
+    override suspend fun setDownsellStartTimeMillis(timeMillis: Long) {
+        putLong(UserPreferences.KEY_DOWNSELL_START_TIME_MILLIS, timeMillis)
+    }
 }

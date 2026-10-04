@@ -10,6 +10,13 @@ interface UserPreferences {
         const val KEY_IS_ONBOARD_SHOWN = "KEY_IS_ONBOARD_SHOWN"
         const val KEY_FIRST_TIME_USER = "KEY_FIRST_TIME_USER"
         const val KEY_NB_PAYWALL_DISMISSED = "KEY_NB_PAYWALL_DISMISSED"
+        const val KEY_USER_GOAL = "KEY_USER_GOAL"
+        const val KEY_USER_BARRIER = "KEY_USER_BARRIER"
+        const val KEY_DAILY_COMMITMENT = "KEY_DAILY_COMMITMENT"
+        const val KEY_HAS_SEEN_EXIT_DOWNSELL = "KEY_HAS_SEEN_EXIT_DOWNSELL"
+        const val KEY_DOWNSELL_START_TIME_MILLIS = "KEY_DOWNSELL_START_TIME_MILLIS"
+        const val KEY_ANONYMOUS_ID = "KEY_ANONYMOUS_ID"
+        const val KEY_IS_DEV_MODE_ENABLED = "KEY_IS_DEV_MODE_ENABLED"
     }
 
     suspend fun getString(key: String, defaultValue: String? = null): String?
@@ -24,4 +31,9 @@ interface UserPreferences {
     suspend fun remove(key: String)
 
     suspend fun clear()
+
+    suspend fun hasSeenExitDownsell(): Boolean
+    suspend fun setExitDownsellSeen(seen: Boolean)
+    suspend fun getDownsellStartTimeMillis(): Long?
+    suspend fun setDownsellStartTimeMillis(timeMillis: Long)
 }

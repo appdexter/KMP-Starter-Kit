@@ -473,7 +473,7 @@
 					"-framework",
 					"\"SwiftUI\"",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.kotlinfoundation.koko;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sample.kmp;
 				PRODUCT_NAME = Koko;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -508,7 +508,7 @@
 					"-framework",
 					"\"SwiftUI\"",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.kotlinfoundation.koko;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sample.kmp;
 				PRODUCT_NAME = Koko;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

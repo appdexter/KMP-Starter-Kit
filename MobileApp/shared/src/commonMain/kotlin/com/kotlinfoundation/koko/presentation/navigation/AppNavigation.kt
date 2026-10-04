@@ -20,7 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import com.kotlinfoundation.koko.data.repository.UserRepository
 import com.kotlinfoundation.koko.data.source.featureflag.FeatureFlagManager
+import com.kotlinfoundation.koko.data.source.featureflag.getFunnelExperimentConfig
 import com.kotlinfoundation.koko.designsystem.components.bottomnav.BottomNavItem
 import com.kotlinfoundation.koko.designsystem.components.bottomnav.BottomNavigationBar
 import com.kotlinfoundation.koko.designsystem.generated.resources.UiRes
@@ -35,6 +37,8 @@ import com.kotlinfoundation.koko.presentation.screens.account.AccountScreen
 import com.kotlinfoundation.koko.presentation.screens.account.AccountViewModel
 import com.kotlinfoundation.koko.presentation.screens.creditbalance.CreditBalanceScreen
 import com.kotlinfoundation.koko.presentation.screens.creditbalance.CreditBalanceViewModel
+import com.kotlinfoundation.koko.presentation.screens.debug.DebugMenuScreen
+import com.kotlinfoundation.koko.presentation.screens.debug.DebugMenuViewModel
 import com.kotlinfoundation.koko.presentation.screens.gallery.GalleryScreen
 import com.kotlinfoundation.koko.presentation.screens.gallery.GalleryViewModel
 import com.kotlinfoundation.koko.presentation.screens.generationresult.GenerationResultScreen
@@ -54,6 +58,7 @@ import com.kotlinfoundation.koko.presentation.screens.signin.SignInScreen
 import com.kotlinfoundation.koko.presentation.screens.subscriptions.SubscriptionsScreen
 import com.kotlinfoundation.koko.presentation.screens.subscriptions.SubscriptionsViewModel
 import com.kotlinfoundation.koko.root.AppConfiguration
+import com.kotlinfoundation.koko.root.AuthMode
 import com.kotlinfoundation.koko.util.Constants
 import com.kotlinfoundation.koko.util.extensions.isKeyboardOpen
 import org.koin.compose.koinInject
@@ -167,6 +172,7 @@ private fun EntryProviderScope<ScreenRoute>.screens(navigator: Navigator) {
             onNavigateSignIn = { navigator.navigate(SignInScreenRoute()) },
             onNavigateProfile = { navigator.navigate(ProfileScreenRoute) },
             onNavigateSubscriptions = { navigator.navigate(SubscriptionsScreenRoute) },
+            onNavigateDebugMenu = { navigator.navigate(DebugMenuScreenRoute(from = "account")) },
         )
     }
 
@@ -174,15 +180,41 @@ private fun EntryProviderScope<ScreenRoute>.screens(navigator: Navigator) {
 
     entry<OnBoardingScreenRoute> {
         val viewModel = koinViewModel<OnBoardingViewModel>()
+        val featureFlagManager = koinInject<FeatureFlagManager>()
+        val userRepository = koinInject<UserRepository>()
+        val funnelConfig = featureFlagManager.getFunnelExperimentConfig()
+
+        val style = when (funnelConfig.onboardingStyle.uppercase()) {
+            "STYLE1" -> OnBoardingScreenStyle.STYLE1
+            "STYLE2" -> OnBoardingScreenStyle.STYLE2
+            else -> OnBoardingScreenStyle.DEEP_ASSESSMENT
+        }
+
         OnBoardingScreen(
-            style = OnBoardingScreenStyle.STYLE1,
+            style = style,
             viewModel = viewModel,
             onOnBoardingFinished = { isNewUser ->
-                navigator.set(HomeScreenRoute)
-                if (isNewUser && AppConfiguration.PREMIUM_FEATURES_ENABLED) {
-                    navigator.navigate(
-                        PaywallScreenRoute(placementId = Constants.PAYWALL_PLACEMENT_ONBOARDING),
+                val currentUser = userRepository.currentUser.replayCache.firstOrNull()?.getOrNull()
+                val isUserSignedIn = currentUser != null && (
+                    !currentUser.isAnonymous || (AppConfiguration.AUTH_ALLOW_GUEST_SIGN_IN && currentUser.id.isNotEmpty())
                     )
+
+                if (AppConfiguration.AUTH_MODE == AuthMode.MANDATORY && !isUserSignedIn) {
+                    navigator.set(HomeScreenRoute)
+                    navigator.navigate(SignInScreenRoute())
+                } else {
+                    navigator.set(HomeScreenRoute)
+                    if (isNewUser && AppConfiguration.PREMIUM_FEATURES_ENABLED && funnelConfig.showOnboardingPaywall) {
+                        val assessmentState = viewModel.uiState.value
+                        navigator.navigate(
+                            PaywallScreenRoute(
+                                placementId = Constants.PAYWALL_PLACEMENT_ONBOARDING,
+                                userGoal = assessmentState.selectedGoal,
+                                userBarrier = assessmentState.selectedBarrier,
+                                userDailyMinutes = assessmentState.dailyMinutes,
+                            ),
+                        )
+                    }
                 }
             },
         )
@@ -194,6 +226,8 @@ private fun EntryProviderScope<ScreenRoute>.screens(navigator: Navigator) {
             viewModel = viewModel,
             onSignInRequired = { navigator.replace(SignInScreenRoute()) },
             onNavigateToBack = { navigator.goBack() },
+            onNavigateToDebugMenu = { navigator.navigate(DebugMenuScreenRoute(from = "profile")) },
+            onNavigateToPaywall = { navigator.navigate(PaywallScreenRoute()) },
         )
     }
 
@@ -242,7 +276,9 @@ private fun EntryProviderScope<ScreenRoute>.screens(navigator: Navigator) {
     entry<PaywallScreenRoute> { key ->
         val featureFlagManager = koinInject<FeatureFlagManager>()
         val viewModel = koinViewModel<PaywallViewModel>(
-            parameters = { parametersOf(key.placementId) },
+            parameters = {
+                parametersOf(key.placementId, key.userGoal, key.userBarrier, key.userDailyMinutes)
+            },
         )
         if (featureFlagManager.getBoolean(FeatureFlagManager.Keys.SHOW_REMOTE_PAYWALL)) {
             Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
@@ -265,6 +301,14 @@ private fun EntryProviderScope<ScreenRoute>.screens(navigator: Navigator) {
                 onSignInRequired = { navigator.navigate(SignInScreenRoute()) },
             )
         }
+    }
+
+    entry<DebugMenuScreenRoute> {
+        val viewModel = koinViewModel<DebugMenuViewModel>()
+        DebugMenuScreen(
+            viewModel = viewModel,
+            onNavigateBack = { navigator.goBack() },
+        )
     }
 
     // Add new screen entries below — generate_screen.sh inserts here.

@@ -16,6 +16,18 @@ data class PaywallUiState(
     val signInActionRequired: Boolean = false,
     val mode: PaywallMode = PaywallMode.SUBSCRIPTION,
     val currentPlacementId: String? = null,
+    val userGoal: String? = null,
+    val userBarrier: String? = null,
+    val userDailyMinutes: Int? = null,
+    val isCloseButtonVisible: Boolean = false,
+    val showExitIntentDownsell: Boolean = false,
+    val showMicroCreditDownsell: Boolean = false,
+    val downsellTimeRemainingSeconds: Int = 600,
+    val downsellDiscountPercent: Int = 40,
+    val downsellOriginalPrice: String? = null,
+    val downsellDiscountedPrice: String? = null,
+    val microCreditAmount: Int = 50,
+    val microCreditPriceText: String = "$4.99",
     /** Text on the buy CTA button (e.g. "Continue", "Try for $0.00", "Buy credits"). */
     val ctaText: UiText = UiText.empty(),
     /**
@@ -56,4 +68,9 @@ sealed interface PaywallUiEvent {
     data object OnClickBuy : PaywallUiEvent
     data object OnClickRestore : PaywallUiEvent
     data class OnSelectPackage(val packageId: PurchasePackageId) : PaywallUiEvent
+    data object OnDismissAttempt : PaywallUiEvent
+    data object OnClaimDownsell : PaywallUiEvent
+    data object OnDeclineDownsell : PaywallUiEvent
+    data object OnBuyMicroCredit : PaywallUiEvent
+    data object OnDeclineMicroCredit : PaywallUiEvent
 }

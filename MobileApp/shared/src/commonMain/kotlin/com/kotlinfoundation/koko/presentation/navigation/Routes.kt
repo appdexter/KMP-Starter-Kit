@@ -59,6 +59,15 @@ data class GenerationResultScreenRoute(val id: String) : ScreenRoute
 
 @Serializable
 @SerialName("Paywall")
-data class PaywallScreenRoute(val placementId: String? = null) : ScreenRoute
+data class PaywallScreenRoute(
+    val placementId: String? = null,
+    val userGoal: String? = null,
+    val userBarrier: String? = null,
+    val userDailyMinutes: Int? = null,
+) : ScreenRoute
 
 // Add new routes below — generate_screen.sh inserts here.
+
+@Serializable
+@SerialName("DebugMenu")
+data class DebugMenuScreenRoute(val from: String = "settings") : ScreenRoute

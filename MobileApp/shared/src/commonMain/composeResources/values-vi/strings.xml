@@ -1,0 +1,61 @@
+<resources>
+    <string name="bottom_nav_label_home">Trang chủ</string>
+    <string name="bottom_nav_label_profile">Hồ sơ</string>
+    <string name="bottom_nav_label_gallery">Bộ sưu tập</string>
+
+    <string name="btn_get_started">Bắt đầu ngay</string>
+    <string name="btn_restore_purchase">Khôi phục mua hàng</string>
+    <string name="btn_skip">Bỏ qua</string>
+    <string name="btn_next">Tiếp tục</string>
+    <string name="btn_cancel">Hủy</string>
+    <string name="btn_get_premium">Nâng cấp Premium ngay</string>
+    <string name="btn_maybe_later">Để sau</string>
+
+    <string name="title_sign_in">Đăng nhập</string>
+    <string name="title_sign_up">Đăng ký</string>
+    <string name="title_screen_home">Trang chủ</string>
+    <string name="title_screen_gallery">Bộ sưu tập</string>
+    <string name="title_screen_account">Tài khoản</string>
+    <string name="title_screen_profile">Hồ sơ cá nhân</string>
+    <string name="title_screen_credits">Credits</string>
+
+    <string name="subscriptions">Gói đăng ký</string>
+    <string name="logout">Đăng xuất</string>
+    <string name="help_and_support">Trợ giúp &amp; Hỗ trợ</string>
+
+    <string name="btn_upgrade_premium">Nâng cấp Premium</string>
+
+    <!-- Personalized Plan Header -->
+    <string name="paywall_personalized_badge">KẾ HOẠCH DÀNH RIÊNG CHO BẠN</string>
+    <string name="paywall_personalized_headline_both">Lộ trình 30 ngày vượt qua %1$s &amp; đạt %2$s</string>
+    <string name="paywall_personalized_headline_goal">Lộ trình 30 ngày để đạt %1$s</string>
+    <string name="paywall_personalized_headline_barrier">Lộ trình 30 ngày vượt qua %1$s</string>
+    <string name="paywall_personalized_headline_default">Lộ trình 30 ngày cá nhân hóa bứt phá tiềm năng</string>
+    <string name="paywall_personalized_subtitle">Được tối ưu hóa theo khảo sát cá nhân của bạn, xây dựng từng bước nhỏ để tạo đột phá bền vững.</string>
+    <string name="paywall_personalized_commitment">Cam kết %1$d phút/ngày • Nhịp điệu vững chắc</string>
+    <string name="paywall_personalized_phase_1">GĐ 1</string>
+    <string name="paywall_personalized_phase_1_label">Khởi động</string>
+    <string name="paywall_personalized_phase_2">GĐ 2</string>
+    <string name="paywall_personalized_phase_2_label">Bứt phá</string>
+    <string name="paywall_personalized_phase_3">GĐ 3</string>
+    <string name="paywall_personalized_phase_3_label">Làm chủ</string>
+
+    <!-- Exit Intent Downsell Dialog -->
+    <string name="downsell_exit_badge">TIẾT KIỆM %1$d%% • ƯU ĐÃI ĐỘC QUYỀN</string>
+    <string name="downsell_exit_headline">Chờ đã! Đừng bỏ lỡ ưu đãi đặc biệt</string>
+    <string name="downsell_exit_subtitle">Cơ hội duy nhất trước khi rời đi: Mở khóa trọn bộ tính năng cao cấp với mức giá tốt nhất.</string>
+    <string name="downsell_exit_timer_expires">Ưu đãi hết hạn sau:</string>
+    <string name="downsell_exit_regular_price">Giá gốc</string>
+    <string name="downsell_exit_special_price">Giá ưu đãi hôm nay</string>
+    <string name="downsell_exit_cta">Nhận ưu đãi giảm %1$d%% ngay</string>
+    <string name="downsell_exit_decline">Không, tôi từ chối ưu đãi này</string>
+
+    <!-- Micro Credit Downsell Bottom Sheet -->
+    <string name="downsell_credit_title">Chưa sẵn sàng đăng ký định kỳ?</string>
+    <string name="downsell_credit_subtitle">Thử ngay gói %1$d Credits khởi động để trải nghiệm toàn bộ tính năng cao cấp chỉ với %2$s (Không gia hạn tự động).</string>
+    <string name="downsell_credit_perk_1">Trải nghiệm đầy đủ mọi tính năng AI cao cấp</string>
+    <string name="downsell_credit_perk_2">Thanh toán 1 lần duy nhất — Không gia hạn tự động</string>
+    <string name="downsell_credit_perk_3">%1$d Credits không có thời hạn sử dụng</string>
+    <string name="downsell_credit_cta">Mua %1$d Credits (%2$s)</string>
+    <string name="downsell_credit_decline">Bỏ qua &amp; Vào ứng dụng miễn phí</string>
+</resources>

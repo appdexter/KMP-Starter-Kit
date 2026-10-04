@@ -31,6 +31,14 @@ Define new event/param names as constants in the `Analytics` companion (e.g. `EV
 points (screen entry, key conversions). Analytics is gated by the `IS_ANALYTICS_ENABLED` flag in
 `AppInitializer.initializeAnalytics()`.
 
+### Multi-Destination & MMP Attribution (Adjust / AppsFlyer)
+The app uses `AnalyticsRouter` (`growth/analytics/AnalyticsRouter.kt`) which fans out events to both Firebase Analytics and registered MMP destinations:
+- **Adjust & AppsFlyer** attribution is unified under `MmpTracker` (`growth/analytics/mmp/`).
+- Set tokens in `AppConfiguration.kt` (`MMP_PROVIDER`, `ADJUST_APP_TOKEN_*`, `APPSFLYER_DEV_KEY`).
+- Server-to-Server (S2S) revenue: Attribution IDs (`$adjustId` or `$appsflyerId`) are automatically handed off to RevenueCat/Adapty upon app launch.
+- Ad ROAS: AdMob `ad_impression` events are intercepted and forwarded to the active MMP.
+- For deep architecture and setup steps, see [`Docs/MMP_TRACKING.md`](../../Docs/MMP_TRACKING.md).
+
 ## 3. Feature flags via Remote Config
 
 Flags are read through `FeatureFlagManager`

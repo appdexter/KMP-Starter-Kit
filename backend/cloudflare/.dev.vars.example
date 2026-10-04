@@ -1,0 +1,27 @@
+# Cloudflare Workers Local & Production Secrets Template (.dev.vars)
+# Copy this file to .dev.vars for local testing (`wrangler dev`)
+# Set these in production via: `npx wrangler secret put <KEY>`
+
+ENVIRONMENT=development
+
+# Meta Conversions API (CAPI)
+META_PIXEL_ID=your_meta_pixel_id
+META_CAPI_ACCESS_TOKEN=your_meta_system_user_access_token
+META_TEST_EVENT_CODE=TEST12345
+
+# Google Ads API / GA4 Measurement Protocol
+# For GA4 Measurement Protocol:
+GOOGLE_ANALYTICS_MEASUREMENT_ID=G-XXXXXXXXXX
+GOOGLE_ANALYTICS_API_SECRET=your_ga4_measurement_api_secret
+
+# For Direct Google Ads Offline Conversion Upload:
+GOOGLE_ADS_CUSTOMER_ID=123-456-7890
+GOOGLE_ADS_CONVERSION_ACTION_ID=123456789
+GOOGLE_ADS_DEVELOPER_TOKEN=your_developer_token
+GOOGLE_ADS_CLIENT_ID=your_oauth_client_id.apps.googleusercontent.com
+GOOGLE_ADS_CLIENT_SECRET=your_oauth_client_secret
+GOOGLE_ADS_REFRESH_TOKEN=your_oauth_refresh_token
+
+# Webhook Secrets
+WEBHOOK_SECRET_REVENUECAT=your_revenuecat_webhook_auth_token
+WEBHOOK_SECRET_ADAPTY=your_adapty_webhook_secret_token

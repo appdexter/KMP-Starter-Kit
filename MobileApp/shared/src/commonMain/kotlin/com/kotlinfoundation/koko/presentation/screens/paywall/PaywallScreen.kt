@@ -23,6 +23,8 @@ import com.kotlinfoundation.koko.generated.resources.paywall_demo_banner
 import com.kotlinfoundation.koko.generated.resources.paywall_demo_title
 import com.kotlinfoundation.koko.presentation.components.premium.PremiumFeatureFactory
 import com.kotlinfoundation.koko.presentation.components.premium.SuccessfulPurchaseView
+import com.kotlinfoundation.koko.presentation.screens.paywall.components.ExitIntentDownsellDialog
+import com.kotlinfoundation.koko.presentation.screens.paywall.components.MicroCreditDownsellBottomSheet
 import com.kotlinfoundation.koko.presentation.screens.paywall.creditpack.CreditPackPaywallScreen
 import com.kotlinfoundation.koko.presentation.screens.paywall.subscription.SubscriptionPaywallScreen
 import com.kotlinfoundation.koko.util.extensions.asFormattedDate
@@ -74,7 +76,7 @@ fun PaywallScreen(
         modifier = modifier.fillMaxSize().background(AppTheme.colors.background),
         uiState = uiState,
         onUiEvent = viewModel::onUiEvent,
-        onDismiss = onDismiss,
+        onDismiss = { viewModel.onUiEvent(PaywallUiEvent.OnDismissAttempt) },
     )
 }
 
@@ -99,6 +101,26 @@ fun PaywallScreen(
         )
     }
 
+    if (uiState.showExitIntentDownsell) {
+        ExitIntentDownsellDialog(
+            discountPercent = uiState.downsellDiscountPercent,
+            timeRemainingSeconds = uiState.downsellTimeRemainingSeconds,
+            discountedPrice = uiState.downsellDiscountedPrice,
+            originalPrice = uiState.downsellOriginalPrice,
+            onClaimDiscount = { onUiEvent(PaywallUiEvent.OnClaimDownsell) },
+            onDismiss = { onUiEvent(PaywallUiEvent.OnDeclineDownsell) },
+        )
+    }
+
+    if (uiState.showMicroCreditDownsell) {
+        MicroCreditDownsellBottomSheet(
+            creditsAmount = uiState.microCreditAmount,
+            priceText = uiState.microCreditPriceText,
+            onBuyCredits = { onUiEvent(PaywallUiEvent.OnBuyMicroCredit) },
+            onDismiss = { onUiEvent(PaywallUiEvent.OnDeclineMicroCredit) },
+        )
+    }
+
     Column(modifier = modifier) {
         when {
             uiState.isLoading -> Box(modifier = Modifier.weight(1f)) {
@@ -109,14 +131,14 @@ fun PaywallScreen(
                 modifier = Modifier.weight(1f),
                 uiState = uiState,
                 onUiEvent = onUiEvent,
-                onDismiss = onDismiss,
+                onDismiss = { onUiEvent(PaywallUiEvent.OnDismissAttempt) },
             )
 
             else -> SubscriptionPaywallScreen(
                 modifier = Modifier.weight(1f),
                 uiState = uiState,
                 onUiEvent = onUiEvent,
-                onDismiss = onDismiss,
+                onDismiss = { onUiEvent(PaywallUiEvent.OnDismissAttempt) },
             )
         }
     }

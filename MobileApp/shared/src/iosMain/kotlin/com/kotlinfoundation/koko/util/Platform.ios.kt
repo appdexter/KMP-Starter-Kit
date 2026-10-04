@@ -6,6 +6,7 @@ import com.kotlinfoundation.koko.data.source.local.DatabaseProviderImpl
 import com.kotlinfoundation.koko.data.source.local.databaseModule
 import com.kotlinfoundation.koko.data.source.preferences.PreferencesDataStoreProvider
 import com.kotlinfoundation.koko.data.source.preferences.PreferencesDataStoreProviderImpl
+import com.kotlinfoundation.koko.growth.analytics.mmp.MmpTracker
 import com.kotlinfoundation.koko.presentation.components.ads.AdsManager
 import com.kotlinfoundation.koko.presentation.components.ads.IosAdsDisplayer
 import com.kotlinfoundation.koko.util.analytics.Analytics
@@ -38,6 +39,7 @@ internal fun swiftLibDependenciesModule(factory: SwiftLibDependencyFactory): Mod
     single { factory.provideFirebaseAnalyticsImpl() } bind Analytics::class
     single { factory.provideAdsManagerImpl() } bind AdsManager::class
     single { factory.provideIosAdsDisplayer() } bind IosAdsDisplayer::class
+    single { factory.provideMmpTracker() } bind MmpTracker::class
 }
 
 internal actual fun onApplicationStartPlatformSpecific() {

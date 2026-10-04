@@ -42,6 +42,8 @@ files for your own Firebase project from the [Firebase console](https://console.
 (Project settings → Your apps) and replace the placeholders. Never commit real Firebase config to a public
 fork — keep secrets in `local.properties` (already gitignored), which CI also uses.
 
+**MMP Tracking & Attribution (Adjust / AppsFlyer).** Configure `AppConfiguration.MMP_PROVIDER` in `shared/src/commonMain/.../root/AppConfiguration.kt`. Supports zero-overhead native reflection, AdMob ROAS forwarding, and Server-to-Server (S2S) revenue attribution via RevenueCat or Adapty. See [`Docs/MMP_TRACKING.md`](../Docs/MMP_TRACKING.md) for complete setup instructions.
+
 ## Android
 
 To run the application on android device/emulator:

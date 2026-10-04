@@ -1,0 +1,13 @@
+project:
+    name: Koko
+    code: koko
+    account_profile: koko
+    platform: cross_platform
+google_ads:
+    customer_id: ""
+ga4:
+    property_id: ""
+admob:
+    publisher_id: ""
+firebase:
+    project_id: ""

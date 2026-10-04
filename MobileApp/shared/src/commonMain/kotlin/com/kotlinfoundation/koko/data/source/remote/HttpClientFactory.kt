@@ -1,5 +1,6 @@
 package com.kotlinfoundation.koko.data.source.remote
 
+import com.kotlinfoundation.koko.identity.SessionManager
 import com.kotlinfoundation.koko.util.logging.AppLogger
 import com.mmk.kmpauth.core.KMPAuth
 import io.ktor.client.HttpClient
@@ -19,11 +20,15 @@ import kotlinx.serialization.json.Json
 
 /** Builds the app's shared Ktor [HttpClient] — JSON, timeouts, logging, and a bearer-token interceptor. */
 object HttpClientFactory {
-    /** The app/proxy client: attaches the Firebase ID token as a bearer to every request. */
-    fun default() = jsonClient().also {
+    /** The app/proxy client: attaches the Firebase ID token as a bearer and anonymous ID to every request. */
+    fun default(sessionManager: SessionManager? = null) = jsonClient().also {
         it.plugin(HttpSend).intercept { request ->
-            val userToken = KMPAuth.currentUserIdToken(forceRefresh = true).getOrNull()
+            val userToken = sessionManager?.getUserIdToken(forceRefresh = true)
+                ?: KMPAuth.currentUserIdToken(forceRefresh = true).getOrNull()
             request.header("Authorization", "Bearer $userToken")
+            sessionManager?.getAnonymousId()?.takeIf { it.isNotBlank() }?.let { anonId ->
+                request.header("X-Anonymous-ID", anonId)
+            }
             execute(request)
         }
     }

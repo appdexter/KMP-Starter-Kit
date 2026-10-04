@@ -5,6 +5,8 @@ import com.kotlinfoundation.koko.data.source.featureflag.NoImplFeatureFlagManage
 import com.kotlinfoundation.koko.data.source.local.webDatabaseModule
 import com.kotlinfoundation.koko.data.source.preferences.PreferencesDataStoreProvider
 import com.kotlinfoundation.koko.data.source.preferences.PreferencesDataStoreProviderImpl
+import com.kotlinfoundation.koko.growth.analytics.mmp.MmpTracker
+import com.kotlinfoundation.koko.growth.analytics.mmp.NoImplMmpTracker
 import com.kotlinfoundation.koko.presentation.components.ads.AdsManager
 import com.kotlinfoundation.koko.presentation.components.ads.NoImplAdsManager
 import com.kotlinfoundation.koko.util.analytics.Analytics
@@ -32,6 +34,7 @@ internal actual val platformModule: Module = module {
     single { NoImplFeatureFlagManager } bind FeatureFlagManager::class
     single { NoImplAnalytics } bind Analytics::class
     single { NoImplAdsManager } bind AdsManager::class
+    single<MmpTracker> { NoImplMmpTracker }
 }
 
 internal actual fun onApplicationStartPlatformSpecific() {

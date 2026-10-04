@@ -16,12 +16,13 @@ import com.kotlinfoundation.koko.designsystem.theme.AppTheme
 enum class OnBoardingScreenStyle {
     STYLE1,
     STYLE2,
+    DEEP_ASSESSMENT,
 }
 
 @Composable
 fun OnBoardingScreen(
     modifier: Modifier = Modifier,
-    style: OnBoardingScreenStyle,
+    style: OnBoardingScreenStyle = OnBoardingScreenStyle.DEEP_ASSESSMENT,
     viewModel: OnBoardingViewModel,
     onOnBoardingFinished: (isNewUser: Boolean) -> Unit,
 ) {
@@ -50,7 +51,7 @@ fun OnBoardingScreen(
 @Composable
 fun OnBoardingScreen(
     modifier: Modifier = Modifier,
-    style: OnBoardingScreenStyle,
+    style: OnBoardingScreenStyle = OnBoardingScreenStyle.DEEP_ASSESSMENT,
     uiState: OnBoardingUiState,
     onUiEvent: (OnBoardingUiEvent) -> Unit,
 ) {
@@ -72,6 +73,15 @@ fun OnBoardingScreen(
                         modifier = Modifier.fillMaxSize(),
                         uiState = uiState,
                         onUiEvent = onUiEvent,
+                    )
+                }
+
+                OnBoardingScreenStyle.DEEP_ASSESSMENT -> {
+                    DeepAssessmentOnBoardingScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        uiState = uiState,
+                        onUiEvent = onUiEvent,
+                        onNavigateToPaywall = { onUiEvent(OnBoardingUiEvent.FinishOnBoarding) },
                     )
                 }
             }
@@ -112,6 +122,22 @@ private fun OnBoardingScreenStyle2Preview() {
         OnBoardingScreen(
             style = OnBoardingScreenStyle.STYLE2,
             uiState = OnBoardingUiState(isLoading = false),
+            onUiEvent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun OnBoardingScreenDeepAssessmentPreview() {
+    AppTheme {
+        OnBoardingScreen(
+            style = OnBoardingScreenStyle.DEEP_ASSESSMENT,
+            uiState = OnBoardingUiState(
+                currentStep = 1,
+                selectedGoal = "productivity",
+                isLoading = false,
+            ),
             onUiEvent = {},
         )
     }

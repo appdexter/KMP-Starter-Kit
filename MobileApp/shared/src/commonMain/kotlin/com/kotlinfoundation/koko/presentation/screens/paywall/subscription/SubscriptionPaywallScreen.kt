@@ -49,6 +49,7 @@ import com.kotlinfoundation.koko.presentation.screens.paywall.PaywallPackageUiSt
 import com.kotlinfoundation.koko.presentation.screens.paywall.PaywallPreviewData
 import com.kotlinfoundation.koko.presentation.screens.paywall.PaywallUiEvent
 import com.kotlinfoundation.koko.presentation.screens.paywall.PaywallUiState
+import com.kotlinfoundation.koko.presentation.screens.paywall.components.PersonalizedPlanHeader
 import com.kotlinfoundation.koko.presentation.screens.paywall.creditpack.FooterLinksRow
 import com.kotlinfoundation.koko.subscription.api.PurchasePackageId
 import com.kotlinfoundation.koko.util.StoreScreenshot
@@ -66,8 +67,8 @@ fun SubscriptionPaywallScreen(
         modifier = modifier.fillMaxSize().background(AppTheme.colors.background),
         title = "",
         includeBottomInsets = true,
-        navigationIcon = UiRes.drawable.ic_close,
-        onNavigationIconClick = onDismiss,
+        navigationIcon = if (uiState.isCloseButtonVisible) UiRes.drawable.ic_close else null,
+        onNavigationIconClick = { onUiEvent(PaywallUiEvent.OnDismissAttempt) },
         toolbarExtraContent = {
             RestoreActionButton(onClick = { onUiEvent(PaywallUiEvent.OnClickRestore) })
         },
@@ -79,6 +80,13 @@ fun SubscriptionPaywallScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.sectionSpacing),
             ) {
+                if (uiState.userGoal != null || uiState.userBarrier != null) {
+                    PersonalizedPlanHeader(
+                        goal = uiState.userGoal,
+                        barrier = uiState.userBarrier,
+                        dailyMinutes = uiState.userDailyMinutes,
+                    )
+                }
                 Hero()
                 ValueRowsSection()
                 if (uiState.packages.isNotEmpty()) {

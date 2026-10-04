@@ -1,0 +1,50 @@
+# ==========================================
+# GitNexus Exclusion Rules (.gitnexusignore)
+# ==========================================
+
+# 1. Dependencies & Package Managers
+node_modules/
+vendor/
+Pods/
+.venv/
+venv/
+third_party/
+
+# 2. Build Outputs & Compilations
+dist/
+build/
+*/build/
+out/
+target/
+bin/
+obj/
+DerivedData/
+.gradle/
+.kotlin/
+.externalNativeBuild/
+.cxx/
+distribution/keystore/
+distribution/store_screenshots/
+
+# 3. Test Fixtures & Heavy Data
+fixtures/large/
+__snapshots__/
+coverage/
+MobileApp/shared/src/androidHostTest/snapshots/
+
+# 4. Binary, Large Assets & Models
+*.psd
+*.ai
+*.mp4
+*.mov
+*.safetensors
+*.apk
+*.aab
+*.dmg
+*.zip
+*.tar.gz
+*.hprof
+
+# 5. Documentation build
+Documentation/.docusaurus/
+Documentation/build/

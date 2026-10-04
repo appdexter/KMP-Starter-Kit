@@ -30,4 +30,8 @@ class SwiftLibDependencyFactoryImpl: SwiftLibDependencyFactory {
         return IosAdsDisplayerImpl()
     }
 
+    func provideMmpTracker() -> any MmpTracker {
+        return NoImplMmpTracker.shared
+    }
+
 }

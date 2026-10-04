@@ -1,16 +1,20 @@
 package com.kotlinfoundation.koko.presentation.screens.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +27,9 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.kotlinfoundation.koko.designsystem.components.AppButton
+import com.kotlinfoundation.koko.designsystem.components.ButtonSize
+import com.kotlinfoundation.koko.designsystem.components.ButtonStyle
 import com.kotlinfoundation.koko.designsystem.components.LoadingProgress
 import com.kotlinfoundation.koko.designsystem.components.LoadingProgressMode
 import com.kotlinfoundation.koko.designsystem.components.ScreenWithToolbar
@@ -32,6 +39,8 @@ import com.kotlinfoundation.koko.designsystem.components.UserInput
 import com.kotlinfoundation.koko.designsystem.components.modals.AppDialog
 import com.kotlinfoundation.koko.designsystem.components.modals.DeleteUserConfirmation
 import com.kotlinfoundation.koko.designsystem.components.modals.DialogType
+import com.kotlinfoundation.koko.designsystem.components.premium.UpgradePremiumBanner
+import com.kotlinfoundation.koko.designsystem.components.premium.UpgradePremiumBannerStyle
 import com.kotlinfoundation.koko.designsystem.generated.resources.UiRes
 import com.kotlinfoundation.koko.designsystem.generated.resources.btn_delete_account
 import com.kotlinfoundation.koko.designsystem.generated.resources.ic_back
@@ -40,7 +49,10 @@ import com.kotlinfoundation.koko.designsystem.generated.resources.ic_profile_img
 import com.kotlinfoundation.koko.designsystem.theme.AppTheme
 import com.kotlinfoundation.koko.domain.model.User
 import com.kotlinfoundation.koko.generated.resources.Res
+import com.kotlinfoundation.koko.generated.resources.btn_upgrade_premium
 import com.kotlinfoundation.koko.generated.resources.title_screen_profile
+import com.kotlinfoundation.koko.root.AppGlobalUiState
+import com.kotlinfoundation.koko.util.UiMessage
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -50,6 +62,8 @@ fun ProfileScreen(
     viewModel: ProfileViewModel,
     onSignInRequired: () -> Unit,
     onNavigateToBack: () -> Unit,
+    onNavigateToDebugMenu: () -> Unit = {},
+    onNavigateToPaywall: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -58,6 +72,21 @@ fun ProfileScreen(
             onSignInRequired()
         }
     }
+
+    LaunchedEffect(uiState.navigateToDebugMenu) {
+        if (uiState.navigateToDebugMenu) {
+            onNavigateToDebugMenu()
+            viewModel.onUiEvent(ProfileScreenUiEvent.OnDebugMenuNavigated)
+        }
+    }
+
+    LaunchedEffect(uiState.feedbackMessage) {
+        uiState.feedbackMessage?.let {
+            AppGlobalUiState.showUiMessage(UiMessage.Message(it))
+            viewModel.onUiEvent(ProfileScreenUiEvent.OnDismissFeedback)
+        }
+    }
+
     if (uiState.deleteUserDialogShown) {
         DeleteUserConfirmation(
             onConfirm = viewModel::onConfirmDeleteAccount,
@@ -75,22 +104,23 @@ fun ProfileScreen(
     if (uiState.isLoading) {
         LoadingProgress(mode = LoadingProgressMode.FULLSCREEN)
     } else {
-        val currentUser = uiState.user
-        currentUser?.let {
-            ScreenWithToolbar(
-                modifier = modifier.fillMaxSize().background(AppTheme.colors.background),
-                title = stringResource(Res.string.title_screen_profile),
-                navigationIcon = UiRes.drawable.ic_back,
-                onNavigationIconClick = onNavigateToBack,
-                isScrollableContent = true,
-                includeBottomInsets = true,
-            ) {
-                ProfileScreen(
-                    modifier = Modifier.fillMaxSize(),
-                    currentUser = it,
-                    onUiEvent = viewModel::onUiEvent,
-                )
-            }
+        val currentUser = uiState.user ?: User(id = "guest", displayName = "Guest User")
+        ScreenWithToolbar(
+            modifier = modifier.fillMaxSize().background(AppTheme.colors.background),
+            title = stringResource(Res.string.title_screen_profile),
+            navigationIcon = UiRes.drawable.ic_back,
+            onNavigationIconClick = onNavigateToBack,
+            isScrollableContent = true,
+            includeBottomInsets = true,
+        ) {
+            ProfileScreen(
+                modifier = Modifier.fillMaxSize(),
+                currentUser = currentUser,
+                uiState = uiState,
+                onUiEvent = viewModel::onUiEvent,
+                onNavigateToDebugMenu = onNavigateToDebugMenu,
+                onNavigateToPaywall = onNavigateToPaywall,
+            )
         }
     }
 }
@@ -99,7 +129,10 @@ fun ProfileScreen(
 fun ProfileScreen(
     modifier: Modifier = Modifier,
     currentUser: User,
+    uiState: ProfileUiState = ProfileUiState(),
     onUiEvent: (ProfileScreenUiEvent) -> Unit,
+    onNavigateToDebugMenu: () -> Unit = {},
+    onNavigateToPaywall: () -> Unit = {},
 ) {
     Column(
         modifier = modifier,
@@ -137,6 +170,22 @@ fun ProfileScreen(
             )
         }
 
+        // Upgrade to Premium
+        if (uiState.canUpgradeToPremium) {
+            UpgradePremiumBanner(
+                modifier = Modifier.fillMaxWidth(),
+                style = UpgradePremiumBannerStyle.LARGE,
+                onClick = onNavigateToPaywall,
+            )
+            AppButton(
+                text = stringResource(Res.string.btn_upgrade_premium),
+                style = ButtonStyle.PRIMARY,
+                size = ButtonSize.LARGE,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onNavigateToPaywall,
+            )
+        }
+
         SettingItemListContainer(
             onClick = { onUiEvent(ProfileScreenUiEvent.OnClickDeleteAccount) },
             itemTextStyle = AppTheme.typography.h5.copy(fontWeight = FontWeight.SemiBold),
@@ -149,6 +198,46 @@ fun ProfileScreen(
                 ),
             ),
         )
+
+        // App Version (Tap 5 consecutive times to unlock Dev Mode)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() },
+                ) {
+                    onUiEvent(ProfileScreenUiEvent.OnVersionTapped)
+                },
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = "Version ${uiState.appVersionInfo.ifBlank { "1.0.0" }}",
+                style = AppTheme.typography.bodyMedium,
+                color = AppTheme.colors.text.secondary,
+            )
+            if (uiState.isDevModeUnlocked) {
+                Text(
+                    text = "Developer Mode Active",
+                    style = AppTheme.typography.bodySmall,
+                    color = AppTheme.colors.primary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
+
+        // Developer Debug Menu Button (only visible when unlocked)
+        if (uiState.isDevModeUnlocked) {
+            AppButton(
+                text = "Developer Debug Menu",
+                style = ButtonStyle.ALTERNATIVE,
+                size = ButtonSize.SMALL,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onNavigateToDebugMenu,
+            )
+        }
     }
 }
 
@@ -178,6 +267,7 @@ private fun ProfileScreenPreview() {
     AppTheme {
         ProfileScreen(
             currentUser = User(id = "1", displayName = "Jane Doe", email = "jane@example.com"),
+            uiState = ProfileUiState(isDevModeUnlocked = true, appVersionInfo = "1.0.0", canUpgradeToPremium = true),
             onUiEvent = {},
         )
     }

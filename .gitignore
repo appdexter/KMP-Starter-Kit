@@ -9,6 +9,9 @@ build
 captures
 .externalNativeBuild
 .cxx
+log.txt
+
+CONTRIBUTING.md
 
 
 # Claude Code local settings (machine-specific)

@@ -200,4 +200,40 @@
     <string name="credit_motivational_low">Running low on credits. Top up to keep the ideas flowing.</string>
     <string name="credit_motivational_plenty">You’ve got plenty of credits. Let’s make something amazing!</string>
 
+    <string name="btn_upgrade_premium">Upgrade to Premium</string>
+
+    <!-- Personalized Plan Header -->
+    <string name="paywall_personalized_badge">PERSONALIZED PLAN FOR YOU</string>
+    <string name="paywall_personalized_headline_both">30-Day Blueprint to Overcome %1$s &amp; Achieve %2$s</string>
+    <string name="paywall_personalized_headline_goal">30-Day Blueprint to Achieve %1$s</string>
+    <string name="paywall_personalized_headline_barrier">30-Day Blueprint to Overcome %1$s</string>
+    <string name="paywall_personalized_headline_default">Your 30-Day Personalized Growth Blueprint</string>
+    <string name="paywall_personalized_subtitle">Customized based on your assessment to build sustainable daily progress.</string>
+    <string name="paywall_personalized_commitment">Commitment: %1$d min/day • Steady Pace</string>
+    <string name="paywall_personalized_phase_1">Phase 1</string>
+    <string name="paywall_personalized_phase_1_label">Kickoff</string>
+    <string name="paywall_personalized_phase_2">Phase 2</string>
+    <string name="paywall_personalized_phase_2_label">Momentum</string>
+    <string name="paywall_personalized_phase_3">Phase 3</string>
+    <string name="paywall_personalized_phase_3_label">Mastery</string>
+
+    <!-- Exit Intent Downsell Dialog -->
+    <string name="downsell_exit_badge">SAVE %1$d%% • EXCLUSIVE OFFER</string>
+    <string name="downsell_exit_headline">Wait! Don’t Miss This Exclusive Offer</string>
+    <string name="downsell_exit_subtitle">One-time opportunity before you leave: Unlock full premium access at our lowest price.</string>
+    <string name="downsell_exit_timer_expires">Offer expires in:</string>
+    <string name="downsell_exit_regular_price">Regular Price</string>
+    <string name="downsell_exit_special_price">Special Price Today</string>
+    <string name="downsell_exit_cta">Claim %1$d%% Discount Now</string>
+    <string name="downsell_exit_decline">No thanks, I’ll pass on this deal</string>
+
+    <!-- Micro Credit Downsell Bottom Sheet -->
+    <string name="downsell_credit_title">Not ready for a subscription?</string>
+    <string name="downsell_credit_subtitle">Try our %1$d Credits starter pack to explore all premium features for only %2$s (No auto-renewal).</string>
+    <string name="downsell_credit_perk_1">Full access to all premium AI features</string>
+    <string name="downsell_credit_perk_2">One-time payment — Never auto-renews</string>
+    <string name="downsell_credit_perk_3">%1$d credits that never expire</string>
+    <string name="downsell_credit_cta">Get %1$d Credits (%2$s)</string>
+    <string name="downsell_credit_decline">Skip &amp; Continue Free</string>
+
 </resources>

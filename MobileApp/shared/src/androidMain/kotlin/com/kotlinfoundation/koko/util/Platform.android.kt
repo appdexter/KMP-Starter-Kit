@@ -12,6 +12,8 @@ import com.kotlinfoundation.koko.data.source.local.DatabaseProviderImpl
 import com.kotlinfoundation.koko.data.source.local.databaseModule
 import com.kotlinfoundation.koko.data.source.preferences.PreferencesDataStoreProvider
 import com.kotlinfoundation.koko.data.source.preferences.PreferencesDataStoreProviderImpl
+import com.kotlinfoundation.koko.growth.analytics.mmp.CompositeAndroidMmpTracker
+import com.kotlinfoundation.koko.growth.analytics.mmp.MmpTracker
 import com.kotlinfoundation.koko.presentation.components.ads.AdsManager
 import com.kotlinfoundation.koko.presentation.components.ads.AdsManagerImpl
 import com.kotlinfoundation.koko.shared.R
@@ -51,6 +53,7 @@ internal actual val platformModule: Module = module {
     } bind FeatureFlagManager::class
     single { FirebaseAnalyticsImpl(firebaseAnalytics = Firebase.analytics) } bind Analytics::class
     singleOf(::AdsManagerImpl) bind AdsManager::class
+    single<MmpTracker> { CompositeAndroidMmpTracker(context = get()) }
 }
 
 internal actual fun onApplicationStartPlatformSpecific() {

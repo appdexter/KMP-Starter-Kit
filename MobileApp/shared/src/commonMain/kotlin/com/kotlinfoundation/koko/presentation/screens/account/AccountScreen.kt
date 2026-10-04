@@ -27,7 +27,10 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.kotlinfoundation.koko.designsystem.components.AppButton
 import com.kotlinfoundation.koko.designsystem.components.AppCardContainer
+import com.kotlinfoundation.koko.designsystem.components.ButtonSize
+import com.kotlinfoundation.koko.designsystem.components.ButtonStyle
 import com.kotlinfoundation.koko.designsystem.components.ScreenWithToolbar
 import com.kotlinfoundation.koko.designsystem.components.SettingItemListContainer
 import com.kotlinfoundation.koko.designsystem.components.SmallTitle
@@ -45,9 +48,12 @@ import com.kotlinfoundation.koko.designsystem.generated.resources.text_logout_co
 import com.kotlinfoundation.koko.designsystem.theme.AppTheme
 import com.kotlinfoundation.koko.domain.model.User
 import com.kotlinfoundation.koko.generated.resources.Res
+import com.kotlinfoundation.koko.generated.resources.btn_upgrade_premium
+import com.kotlinfoundation.koko.generated.resources.credit_status_free
 import com.kotlinfoundation.koko.generated.resources.help_and_support
 import com.kotlinfoundation.koko.generated.resources.subscriptions
 import com.kotlinfoundation.koko.generated.resources.title_screen_account
+import com.kotlinfoundation.koko.generated.resources.title_screen_profile
 import com.kotlinfoundation.koko.generated.resources.title_sign_in
 import com.kotlinfoundation.koko.root.AppConfiguration
 import com.kotlinfoundation.koko.root.AppGlobalUiState
@@ -65,6 +71,7 @@ fun AccountScreen(
     onNavigateSignIn: () -> Unit,
     onNavigateProfile: () -> Unit,
     onNavigateSubscriptions: () -> Unit,
+    onNavigateDebugMenu: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -105,6 +112,7 @@ fun AccountScreen(
                 else -> viewModel.onUiEvent(it)
             }
         },
+        onNavigateDebugMenu = onNavigateDebugMenu,
     )
 }
 
@@ -113,6 +121,7 @@ fun AccountScreen(
     modifier: Modifier = Modifier,
     uiState: AccountUiState,
     onUiEvent: (AccountUiEvent) -> Unit,
+    onNavigateDebugMenu: () -> Unit = {},
 ) {
     ScreenWithToolbar(
         modifier = modifier,
@@ -122,23 +131,40 @@ fun AccountScreen(
         Column(verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.sectionSpacing)) {
             if (uiState.showUpgradePremiumBanner) {
                 UpgradePremiumBanner(
-                    style = UpgradePremiumBannerStyle.SMALL,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = UpgradePremiumBannerStyle.LARGE,
+                    onClick = { onUiEvent(AccountUiEvent.OnClickUpgradePremium) },
+                )
+                AppButton(
+                    text = stringResource(Res.string.btn_upgrade_premium),
+                    style = ButtonStyle.PRIMARY,
+                    size = ButtonSize.LARGE,
+                    modifier = Modifier.fillMaxWidth(),
                     onClick = { onUiEvent(AccountUiEvent.OnClickUpgradePremium) },
                 )
             }
 
-            if (AppConfiguration.AUTH_SOCIAL_LOGIN_ENABLED || uiState.user?.id?.isNotEmpty() == true) {
-                ProfileInfoBox(user = uiState.user, onClick = {
-                    if (uiState.user == null) {
+            ProfileInfoBox(
+                user = uiState.user,
+                onClick = {
+                    if (AppConfiguration.isAuthEnabled && uiState.user == null) {
                         onUiEvent(AccountUiEvent.OnClickSignIn)
                     } else {
                         onUiEvent(AccountUiEvent.OnClickProfile)
                     }
-                })
-            }
+                },
+            )
             SettingItemListContainer(
                 itemList = uiState.settingsItemList,
                 onClick = { onUiEvent(AccountUiEvent.OnSettingsItemClick(it)) },
+            )
+
+            AppButton(
+                text = "Developer Debug Menu",
+                style = ButtonStyle.TEXT,
+                size = ButtonSize.SMALL,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onNavigateDebugMenu,
             )
         }
     }
@@ -146,78 +172,51 @@ fun AccountScreen(
 
 @Composable
 private fun ProfileInfoBox(user: User?, onClick: () -> Unit) {
-    val clipboardManager = LocalClipboardManager.current
     AppCardContainer(
         modifier = Modifier.fillMaxWidth(),
-        onClick = {
-            if (AppConfiguration.AUTH_SOCIAL_LOGIN_ENABLED) {
-                onClick()
-            } else {
-                user?.id?.let {
-                    clipboardManager.setText(AnnotatedString(it))
-                    AppGlobalUiState.showUiMessage(UiMessage.Message("User ID is copied to clipboard"))
-                }
-            }
-        },
+        onClick = onClick,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(AppTheme.spacing.horizontalItemSpacing),
         ) {
-            if (AppConfiguration.AUTH_SOCIAL_LOGIN_ENABLED) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalPlatformContext.current)
-                        .data(user?.photoUrl)
-                        .crossfade(true)
-                        .build(),
-                    placeholder = painterResource(UiRes.drawable.ic_profile_img_placeholder),
-                    error = painterResource(UiRes.drawable.ic_profile_img_placeholder),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.size(60.dp).clip(CircleShape),
-                )
+            AsyncImage(
+                model = ImageRequest.Builder(LocalPlatformContext.current)
+                    .data(user?.photoUrl)
+                    .crossfade(true)
+                    .build(),
+                placeholder = painterResource(UiRes.drawable.ic_profile_img_placeholder),
+                error = painterResource(UiRes.drawable.ic_profile_img_placeholder),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(60.dp).clip(CircleShape),
+            )
 
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.groupedVerticalElementSpacingSmall),
-                ) {
-                    val displayName =
-                        if (user == null) stringResource(Res.string.title_sign_in) else user.displayName
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(AppTheme.spacing.groupedVerticalElementSpacingSmall),
+            ) {
+                val displayName = user?.displayName?.ifBlank { null }
+                    ?: if (user == null && AppConfiguration.isAuthEnabled) stringResource(Res.string.title_sign_in) else stringResource(Res.string.title_screen_profile)
 
-                    SmallTitle(text = displayName ?: "User Name")
-                    user?.email?.let { email ->
-                        Text(
-                            email,
-                            style = AppTheme.typography.bodyMedium,
-                            color = AppTheme.colors.text.secondary,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
-                }
-
-                Icon(
-                    modifier = Modifier.size(24.dp),
-                    imageVector = vectorResource(UiRes.drawable.ic_arrow_right),
-                    contentDescription = null,
-                    tint = AppTheme.colors.text.primary,
-                )
-            } else {
+                SmallTitle(text = displayName)
+                val subtitle = user?.email?.ifBlank { null }
+                    ?: if (user != null && user.id.isNotBlank()) "User ID: ${user.id}" else stringResource(Res.string.credit_status_free)
                 Text(
-                    modifier = Modifier.weight(1f),
-                    text = "User ID: ${user?.id ?: ""}",
-                    style = AppTheme.typography.bodySmall,
-                    color = AppTheme.colors.text.primary,
+                    subtitle,
+                    style = AppTheme.typography.bodyMedium,
+                    color = AppTheme.colors.text.secondary,
                     fontWeight = FontWeight.Medium,
                 )
-
-                Icon(
-                    modifier = Modifier.size(24.dp),
-                    imageVector = vectorResource(UiRes.drawable.ic_copy_content),
-                    contentDescription = null,
-                    tint = AppTheme.colors.text.primary,
-                )
             }
+
+            Icon(
+                modifier = Modifier.size(24.dp),
+                imageVector = vectorResource(UiRes.drawable.ic_arrow_right),
+                contentDescription = null,
+                tint = AppTheme.colors.text.primary,
+            )
         }
     }
 }

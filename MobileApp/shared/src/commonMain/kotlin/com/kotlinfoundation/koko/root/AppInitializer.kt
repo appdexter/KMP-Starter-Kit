@@ -4,6 +4,8 @@ import com.kotlinfoundation.koko.common.BuildConfig
 import com.kotlinfoundation.koko.data.repository.SubscriptionRepository
 import com.kotlinfoundation.koko.data.repository.UserRepository
 import com.kotlinfoundation.koko.data.source.featureflag.FeatureFlagManager
+import com.kotlinfoundation.koko.growth.analytics.mmp.MmpConfig
+import com.kotlinfoundation.koko.growth.analytics.mmp.MmpTracker
 import com.kotlinfoundation.koko.presentation.components.ads.AdsManager
 import com.kotlinfoundation.koko.subscription.api.SubscriptionProvider
 import com.kotlinfoundation.koko.subscription.api.runCatchingSuspend
@@ -53,13 +55,16 @@ object AppInitializer {
 
         refreshFeatureFlags()
         initializeAnalytics()
+        initializeMmp()
         initializeNotification()
-        initializeAuthentication()
+        if (AppConfiguration.isAuthEnabled) initializeAuthentication()
         initializeInAppPurchase()
         initializeAds()
 
-        val userRepository by this.koin.inject<UserRepository>()
-        userRepository.signInAnonymouslyIfNecessary()
+        if (AppConfiguration.isAuthEnabled) {
+            val userRepository by this.koin.inject<UserRepository>()
+            userRepository.signInAnonymouslyIfNecessary()
+        }
     }
 }
 
@@ -74,6 +79,27 @@ private fun KoinApplication.initializeAnalytics() {
     val isAnalyticsEnabled =
         featureFlagManager.getBoolean(FeatureFlagManager.Keys.IS_ANALYTICS_ENABLED)
     analytics.setEnabled(enabled = isAnalyticsEnabled)
+}
+
+private fun KoinApplication.initializeMmp() {
+    val mmpConfig by this.koin.inject<MmpConfig>()
+    val mmpTracker by this.koin.inject<MmpTracker>()
+    val applicationScope by this.koin.inject<ApplicationScope>()
+
+    if (mmpConfig.hasValidConfiguration(isAndroid)) {
+        mmpTracker.initialize(mmpConfig)
+
+        // Asynchronously resolve Attribution ID and link with Subscription Provider (S2S attribution)
+        applicationScope.launch(defaultAsyncDispatcher) {
+            val attrId = mmpTracker.getAttributionId()
+            val attributeKey = mmpTracker.getRevenueCatAttributeKey()
+            if (!attrId.isNullOrBlank() && attributeKey.isNotBlank()) {
+                val subscriptionProvider by this@initializeMmp.koin.inject<SubscriptionProvider>()
+                subscriptionProvider.setCustomAttributes(mapOf(attributeKey to attrId))
+                AppLogger.d("Linked MMP Attribution ID ($attributeKey) with SubscriptionProvider: $attrId")
+            }
+        }
+    }
 }
 
 private fun KoinApplication.initializeAds() {

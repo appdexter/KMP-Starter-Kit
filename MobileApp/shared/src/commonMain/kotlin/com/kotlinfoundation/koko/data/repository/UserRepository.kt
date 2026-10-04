@@ -7,6 +7,8 @@ import com.kotlinfoundation.koko.data.source.preferences.UserPreferences
 import com.kotlinfoundation.koko.data.source.preferences.UserPreferences.Keys.KEY_FIRST_TIME_USER
 import com.kotlinfoundation.koko.domain.exceptions.UnAuthorizedException
 import com.kotlinfoundation.koko.domain.model.User
+import com.kotlinfoundation.koko.identity.SessionManager
+import com.kotlinfoundation.koko.root.AppConfiguration
 import com.kotlinfoundation.koko.util.ApplicationScope
 import com.kotlinfoundation.koko.util.logging.AppLogger
 import com.mmk.kmpauth.core.KMPAuth
@@ -33,15 +35,33 @@ class UserRepository(
     private val userPreferences: UserPreferences,
     private val backgroundExecutor: BackgroundExecutor = BackgroundExecutor.IO,
     private val applicationScope: ApplicationScope,
+    private val sessionManager: SessionManager? = null,
 ) {
 
     init {
-        signInAnonymouslyIfNecessary()
+        if (AppConfiguration.isAuthEnabled) {
+            signInAnonymouslyIfNecessary()
+        }
     }
 
     private val authTrigger = MutableStateFlow(Clock.System.now().toEpochMilliseconds())
 
-    val currentUser: SharedFlow<Result<User>> =
+    val currentUser: SharedFlow<Result<User>> = if (!AppConfiguration.isAuthEnabled) {
+        authTrigger.map {
+            val anonymousId = sessionManager?.getAnonymousId()
+                ?: userPreferences.getString(UserPreferences.KEY_ANONYMOUS_ID)
+                ?: ""
+            if (anonymousId.isNotBlank()) {
+                subscriptionRepository.login(userId = anonymousId)
+            }
+            val user = User(
+                id = anonymousId,
+                isAnonymous = true,
+                hasPremiumAccess = subscriptionRepository.hasPremiumAccess(),
+            )
+            Result.success(user)
+        }.shareIn(applicationScope, SharingStarted.Eagerly, 1)
+    } else {
         combine(authTrigger, KMPAuth.currentUserFlow) { _, currentUser -> currentUser }
             .map { currentUser ->
                 AppLogger.d("Current user is updated: $currentUser")
@@ -54,8 +74,10 @@ class UserRepository(
                     Result.success(user)
                 }
             }.shareIn(applicationScope, SharingStarted.Eagerly, 1)
+    }
 
     fun signInAnonymouslyIfNecessary() = applicationScope.launch {
+        if (!AppConfiguration.isAuthEnabled) return@launch
         backgroundExecutor.execute {
             val isFirstTimeUser = userPreferences.getBoolean(KEY_FIRST_TIME_USER, true)
             if (KMPAuth.currentUser() == null && isFirstTimeUser) {
@@ -71,23 +93,27 @@ class UserRepository(
 
     // This is added because when linking anonymous account with google account, firebase listener is not triggered
     fun onSuccessfulOauthSign() {
+        if (!AppConfiguration.isAuthEnabled) return
         applicationScope.launch { authTrigger.emit(Clock.System.now().toEpochMilliseconds()) }
     }
 
     suspend fun continueAsGuest(): Result<Unit> = backgroundExecutor.execute {
+        if (!AppConfiguration.isAuthEnabled) return@execute Result.success(Unit)
         if (KMPAuth.currentUser() == null) {
             KMPAuth.signInAnonymously().getOrThrow()
         }
         Result.success(Unit)
     }
 
-    suspend fun logOut() = backgroundExecutor.execute {
+    suspend fun logOut(): Result<Unit> = backgroundExecutor.execute {
+        if (!AppConfiguration.isAuthEnabled) return@execute Result.success(Unit)
         subscriptionRepository.logOut()
         KMPAuth.signOut()
         Result.success(Unit)
     }
 
-    suspend fun deleteAccount() = backgroundExecutor.execute {
+    suspend fun deleteAccount(): Result<Unit> = backgroundExecutor.execute {
+        if (!AppConfiguration.isAuthEnabled) return@execute Result.success(Unit)
         KMPAuth.deleteAccount().getOrThrow()
         logOut()
         Result.success(Unit)

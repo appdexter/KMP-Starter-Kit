@@ -349,7 +349,7 @@ sealed interface HomeUiEvent {
 - Initialization: `root/AppInitializer.kt` is the bootstrap — `startKoin { … modules(appModules) … }` (loaded from `Di.kt`) plus one-time startup side effects (logging, analytics, notifications, billing, ads, anonymous sign-in). Each platform entry point calls `AppInitializer.initialize { }` once.
 
 ### App configuration
-Per-app compile-time config lives in **`root/AppConfiguration.kt`** (`object AppConfiguration`) — the toggles/values a developer sets when spinning up an app: `PREMIUM_FEATURES_ENABLED`, `CLOUD_FUNCTIONS_URL`, `USE_AI_PROXY_SERVER`, `AUTH_SOCIAL_LOGIN_ENABLED`, legal URLs, `CONTACT_EMAIL`, `APPSTORE_APP_ID`, and the `subscriptionProviderFactory` / `authServiceProviderFactory` selectors. `PREMIUM_FEATURES_ENABLED` controls whether the app has any **premium (paid/gated) features** — not whether the app is free to download. `false` (default) = **no premium features**, everything unlocked/free: no paywall/subscriptions/upgrade UI, billing never initializes, credits off (generation free, credit UI hidden) — gated at `AppInitializer` (skip IAP init), `AccountViewModel` (no Subscriptions row/banner), onboarding (no Get-Premium button), `HomeScreen` (no credit chip), and `GenerationRepository` (no credit spend). `true` = premium features available (gate/limit via subscriptions + credits + paywall); flip it in the monetization phase once store products exist. Distinct from **`util/Constants.kt`** (framework detail — paywall entitlement/placement ids, `CREDIT_PACK_PRODUCT_ID_PREFIX`, DB/prefs file names) and from **`FeatureFlagManager`** (runtime, Firebase Remote Config). `scripts/check_env.sh` reads `AppConfiguration.kt` for the URLs/AI/auth values it verifies.
+Per-app compile-time config lives in **`root/AppConfiguration.kt`** (`object AppConfiguration`) — the toggles/values a developer sets when spinning up an app: `PREMIUM_FEATURES_ENABLED`, `MMP_PROVIDER` (`NONE` default, `ADJUST`, or `APPSFLYER`), `ADJUST_APP_TOKEN`, `ADJUST_ENVIRONMENT`, `APPSFLYER_DEV_KEY`, `APPSFLYER_APP_ID`, `CLOUD_FUNCTIONS_URL`, `USE_AI_PROXY_SERVER`, `AUTH_SOCIAL_LOGIN_ENABLED`, legal URLs, `CONTACT_EMAIL`, `APPSTORE_APP_ID`, and the `subscriptionProviderFactory` / `authServiceProviderFactory` selectors. `PREMIUM_FEATURES_ENABLED` controls whether the app has any **premium (paid/gated) features** — not whether the app is free to download. `false` (default) = **no premium features**, everything unlocked/free: no paywall/subscriptions/upgrade UI, billing never initializes, credits off (generation free, credit UI hidden) — gated at `AppInitializer` (skip IAP init), `AccountViewModel` (no Subscriptions row/banner), onboarding (no Get-Premium button), `HomeScreen` (no credit chip), and `GenerationRepository` (no credit spend). `true` = premium features available (gate/limit via subscriptions + credits + paywall); flip it in the monetization phase once store products exist. Distinct from **`util/Constants.kt`** (framework detail — paywall entitlement/placement ids, `CREDIT_PACK_PRODUCT_ID_PREFIX`, DB/prefs file names) and from **`FeatureFlagManager`** (runtime, Firebase Remote Config). `scripts/check_env.sh` reads `AppConfiguration.kt` for the URLs/AI/auth values it verifies.
 
 ### Coroutines
 - `backgroundScope`: `CoroutineScope(SupervisorJob() + Dispatchers.IO)` for repo/data work
@@ -574,6 +574,46 @@ Period units are **plurals** (`paywall_unit_day`, `paywall_unit_day_count`, etc.
 
 **Adding a new placement** (e.g. a new credit-pack-like flow): add a constant in `Constants.PAYWALL_PLACEMENT_*`, an entry in `PaywallMode`, a branch in the mapper's `map(...)` / `pickDefaultSelection(...)`, and route to the right child screen from `PaywallScreen`. Strings get a new prefix; reuse the existing `paywall_*` chrome.
 
+### MMP Tracking & Attribution (Adjust / AppsFlyer)
+
+The starter kit features a dynamic, zero-overhead Mobile Measurement Partner (MMP) architecture supporting both **Adjust** and **AppsFlyer** without hard-locking or bloating the app binary with unused SDKs.
+
+```
+┌────────────────────────────────────────────────────────┐
+│                   AppInitializer                       │
+│    AppLaunch ──► Initialize MMP & Read Attribution ID  │
+└──────────────────────────┬─────────────────────────────┘
+                           │
+             ┌─────────────┴─────────────┐
+             ▼                           ▼
+   ┌───────────────────┐       ┌───────────────────┐
+   │    Adjust ID      │       │   AppsFlyer ID    │
+   │  ("$adjustId")    │       │  ("$appsflyerId") │
+   └─────────┬─────────┘       └─────────┬─────────┘
+             │                           │
+             └─────────────┬─────────────┘
+                           ▼
+             ┌───────────────────────────┐
+             │    SubscriptionProvider   │
+             │   (RevenueCat / Adapty)   │
+             └─────────────┬─────────────┘
+                           ▼
+          Server-to-Server (S2S) Webhook
+                           ▼
+             ┌───────────────────────────┐
+             │   MMP Backend Dashboard   │
+             │ (Verified In-App Revenue) │
+             └───────────────────────────┘
+```
+
+- **Location:** `shared/src/commonMain/kotlin/com/kotlinfoundation/koko/growth/analytics/mmp/`
+- **Dynamic Configuration:** Controlled via `AppConfiguration.MMP_PROVIDER` (`NONE`, `ADJUST`, or `APPSFLYER`).
+- **Defensive Reflection Pattern:** Android implementations (`AndroidAdjustTracker`, `AndroidAppsFlyerTracker`) interact with vendor SDKs using defensive reflection. If the native dependency is not declared in Gradle, the tracker safely degrades to a no-op without crashes or binary bloat.
+- **Cross-Platform Safety:** Desktop (JVM) and Web (wasmJs) safely resolve to `NoImplMmpTracker` with zero runtime penalty.
+- **Automatic Ad Revenue (ROAS):** `MmpAnalyticsDestination` automatically integrates with `AnalyticsRouter`. Whenever `ad_impression` fires from AdMob, impression revenue, network name, and currency are forwarded directly to the active MMP.
+- **Server-to-Server (S2S) In-App Purchase Tracking:** Do NOT track store purchases directly on the client to avoid double-counting. Instead, the tracker captures the Attribution ID (`getAttributionId()`) during bootstrap in `AppInitializer.kt`, passes it to the `SubscriptionProvider` attribute store (`$adjustId` or `$appsflyerId`), and store revenue is forwarded cleanly via RevenueCat/Adapty S2S webhooks.
+- **Full Guide & Setup:** See [`Docs/MMP_TRACKING.md`](Docs/MMP_TRACKING.md) and [`skills/setup-analytics/SKILL.md`](skills/setup-analytics/SKILL.md).
+
 ## Key Dependencies
 
 | Library | Version | Purpose |
@@ -685,3 +725,48 @@ When implementing screens:
 - For iOS: Xcode + optionally KMM plugin
 - Optional: Run KDoctor to verify environment
 - First run downloads Compose and JetBrains JDK; builds take longer initially
+
+<!-- gitnexus:start -->
+# GitNexus — Code Intelligence
+
+This project is indexed by GitNexus as **kmp-contest-starter-kit** (7963 symbols, 14813 relationships, 510 execution flows).
+
+> Index stale? Run `node .gitnexus/run.cjs analyze --index-only` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? Bootstrap with `npx`, `bunx`, or `pnpm dlx` — e.g. `bunx gitnexus@latest analyze` (npm 11 npx crash; #1939).
+
+## Always Do
+
+- **MUST run impact before editing.** Use `impact({target: "symbolName", direction: "upstream"})` or `node .gitnexus/run.cjs impact "symbolName" --direction upstream --repo .`; report callers, processes, and risk. Never substitute grep for graph analysis.
+- **MUST analyze graph changes before committing.** Use `detect_changes({scope: "all"})` (MCP) or `node .gitnexus/run.cjs detect-changes --scope all --repo .` (CLI fallback). `partial: true` or `truncated: true` is not a clean check — a zero means unseen, not unaffected; re-run it. For regression review: `detect_changes({scope: "compare", base_ref: "main"})` or `node .gitnexus/run.cjs detect-changes --scope compare --base-ref "main" --repo .`.
+- MUST warn on HIGH/CRITICAL `risk` pre-edit; never use `riskSharedAxes` to waive a HIGH/CRITICAL `risk` warning. Compare File/symbol: MCP File omits axes; Graph-RAG expands File.
+- **MUST treat `risk: UNKNOWN` as unresolved, not as low.** An empty caller set is not evidence the symbol is unused — it can also mean the callers are not resolvable by the index (plain-object property access, dynamic dispatch, cross-language calls). `impact` pairs `UNKNOWN` with a `riskNote` saying so. Confirm with a text search before treating the symbol as safe to change or delete; do not proceed on the strength of a zero.
+- **MUST use `query({search_query: "concept"})` for concepts/flows, `context({name: "symbolName"})` for a named symbol, or `impact` for blast radius, on read-only callers, dependencies, imports, or execution flow.** Graph first; text search only for empty/`UNKNOWN`/literals.
+- For security review, `explain({target: "fileOrSymbol"})` lists taint findings (source→sink flows; needs `analyze --pdg`).
+
+## Never Do
+
+- NEVER edit a function, class, or method before MCP/CLI impact analysis.
+- NEVER ignore HIGH or CRITICAL risk warnings from impact analysis, and never read `UNKNOWN` as an all-clear — it means the walk could not answer, which is the one verdict that requires confirming by other means.
+- NEVER rename symbols with find-and-replace — use `rename` which understands the call graph.
+- NEVER commit before MCP/CLI graph change analysis.
+
+## Resources
+
+| Resource | Use for |
+| --- | --- |
+| `gitnexus://repo/kmp-contest-starter-kit/context` | Codebase overview, check index freshness |
+| `gitnexus://repo/kmp-contest-starter-kit/clusters` | All functional areas |
+| `gitnexus://repo/kmp-contest-starter-kit/processes` | All execution flows |
+| `gitnexus://repo/kmp-contest-starter-kit/process/{name}` | Step-by-step execution trace |
+
+## CLI
+
+| Task | Read this skill file |
+| --- | --- |
+| Understand architecture / "How does X work?" | `.claude/skills/gitnexus-exploring/SKILL.md` |
+| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus-impact-analysis/SKILL.md` |
+| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus-debugging/SKILL.md` |
+| Rename / extract / split / refactor | `.claude/skills/gitnexus-refactoring/SKILL.md` |
+| Tools, resources, schema reference | `.claude/skills/gitnexus-guide/SKILL.md` |
+| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus-cli/SKILL.md` |
+
+<!-- gitnexus:end -->

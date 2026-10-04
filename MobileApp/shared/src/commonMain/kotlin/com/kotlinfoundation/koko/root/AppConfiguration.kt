@@ -1,5 +1,6 @@
 package com.kotlinfoundation.koko.root
 
+import com.kotlinfoundation.koko.growth.analytics.mmp.MmpProvider
 import com.kotlinfoundation.koko.subscription.config.activeSubscriptionProviderFactory
 
 /**
@@ -27,6 +28,37 @@ object AppConfiguration {
     const val APPSTORE_APP_ID = ""
 
     /**
+     * Active Mobile Measurement Partner (MMP) provider:
+     * - [MmpProvider.NONE]: Disabled.
+     * - [MmpProvider.ADJUST]: Use Adjust attribution & tracking.
+     * - [MmpProvider.APPSFLYER]: Use AppsFlyer attribution & tracking.
+     */
+    val MMP_PROVIDER: MmpProvider = MmpProvider.NONE
+
+    /**
+     * Adjust MMP attribution tokens (Adjust dashboard → App settings).
+     * Separate app token per platform.
+     */
+    const val ADJUST_APP_TOKEN_ANDROID = ""
+    const val ADJUST_APP_TOKEN_IOS = ""
+
+    /**
+     * Map of standard analytics events to Adjust event tokens (Adjust dashboard → Events).
+     */
+    val ADJUST_EVENT_TOKENS: Map<String, String> = emptyMap()
+
+    /**
+     * AppsFlyer MMP configuration (AppsFlyer dashboard → App settings).
+     */
+    const val APPSFLYER_DEV_KEY = ""
+    const val APPSFLYER_APP_ID_IOS = ""
+
+    /**
+     * Map of standard analytics events to AppsFlyer custom event names.
+     */
+    val APPSFLYER_EVENT_TOKENS: Map<String, String> = emptyMap()
+
+    /**
      * How AI (OpenAI/Replicate) calls are routed.
      *
      * - `null` (AUTO, default): use the Cloud Functions proxy only when [CLOUD_FUNCTIONS_URL] is set;
@@ -51,11 +83,26 @@ object AppConfiguration {
     // works without Firebase (`integrate-web-proxy` skill).
     const val CLOUD_FUNCTIONS_URL = ""
 
+    /**
+     * Cloudflare Edge Backend base URL for Server-Side Conversion Tracking (Meta CAPI, Google Ads)
+     * and Subscription Webhooks / Dynamic Configuration.
+     */
+    const val CLOUDFLARE_BACKEND_URL = "https://koko-backend.koko-kmp-backend.workers.dev"
+
+    /**
+     * Controls how authentication operates across the application.
+     */
+    val AUTH_MODE: AuthMode = AuthMode.OPTIONAL
+
+    val isAuthEnabled: Boolean get() = AUTH_MODE.isEnabled
+
+    const val AUTH_ALLOW_GUEST_SIGN_IN = true
+
     // Enables Apple and Google sign-in. If false, only anonymous login is supported.
     // Default false — anonymous auth is the easiest path to a working app (just Firebase +
     // Anonymous sign-in). Flip to true to add Google/Apple (see the enable-auth skill for the
     // extra config: GOOGLE_WEB_CLIENT_ID, iOS Info.plist client IDs, Sign In with Apple capability).
-    const val AUTH_SOCIAL_LOGIN_ENABLED = false
+    const val AUTH_SOCIAL_LOGIN_ENABLED = true
 
     /**
      * Whether the app has any **premium (paid/gated) features**.
@@ -69,7 +116,7 @@ object AppConfiguration {
      *
      * This is about premium *features*, not the app's price.
      */
-    const val PREMIUM_FEATURES_ENABLED = false
+    const val PREMIUM_FEATURES_ENABLED = true
 
     /**
      * The subscription provider is chosen in ONE place — the `SUBSCRIPTION_PROVIDER`
@@ -88,4 +135,19 @@ object AppConfiguration {
      * resolves to whichever one is linked. Do NOT name a concrete provider here.
      */
     val subscriptionProviderFactory get() = activeSubscriptionProviderFactory
+}
+
+enum class AuthMode {
+    /** Auth is completely disabled. App runs offline/local-first, no Firebase Auth init, no sign-in/out UI. */
+    DISABLED,
+
+    /** Auth is optional (guest-first). Users can use the app freely and sign in later if desired. */
+    OPTIONAL,
+
+    /** Auth is mandatory. Users must authenticate before accessing the main app. */
+    MANDATORY,
+
+    ;
+
+    val isEnabled: Boolean get() = this != DISABLED
 }

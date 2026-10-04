@@ -165,27 +165,29 @@ fun SignInScreen(
                         Spacer(modifier = Modifier.height(AppTheme.spacing.defaultSpacing))
                     }
 
-                    AppButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = stringResource(Res.string.btn_continue_as_guest),
-                        // Secondary to Google/Apple when they're shown; the only way in when they're not.
-                        style = if (AppConfiguration.AUTH_SOCIAL_LOGIN_ENABLED) ButtonStyle.TEXT else ButtonStyle.PRIMARY,
-                        isLoading = isGuestLoading,
-                        onClick = {
-                            isGuestLoading = true
-                            coroutineScope.launch {
-                                continueAsGuest()
-                                    .onSuccess { onSuccessfulSignIn() }
-                                    .onFailure { error ->
-                                        AppLogger.e("Continue as guest failed: ${error.message}")
-                                        AppGlobalUiState.showUiMessage(
-                                            UiMessage.Resource(Res.string.auth_continue_as_guest_failed),
-                                        )
-                                    }
-                                isGuestLoading = false
-                            }
-                        },
-                    )
+                    if (AppConfiguration.AUTH_ALLOW_GUEST_SIGN_IN) {
+                        AppButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = stringResource(Res.string.btn_continue_as_guest),
+                            // Secondary to Google/Apple when they're shown; the only way in when they're not.
+                            style = if (AppConfiguration.AUTH_SOCIAL_LOGIN_ENABLED) ButtonStyle.TEXT else ButtonStyle.PRIMARY,
+                            isLoading = isGuestLoading,
+                            onClick = {
+                                isGuestLoading = true
+                                coroutineScope.launch {
+                                    continueAsGuest()
+                                        .onSuccess { onSuccessfulSignIn() }
+                                        .onFailure { error ->
+                                            AppLogger.e("Continue as guest failed: ${error.message}")
+                                            AppGlobalUiState.showUiMessage(
+                                                UiMessage.Resource(Res.string.auth_continue_as_guest_failed),
+                                            )
+                                        }
+                                    isGuestLoading = false
+                                }
+                            },
+                        )
+                    }
 
                     AuthModeToggle(
                         modifier = Modifier.padding(top = AppTheme.spacing.defaultSpacing).fillMaxWidth(),

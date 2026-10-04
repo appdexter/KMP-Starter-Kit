@@ -18,8 +18,18 @@ import com.kotlinfoundation.koko.data.source.remote.apiservices.ai.OpenAiApiServ
 import com.kotlinfoundation.koko.data.source.remote.apiservices.ai.ReplicateApiService
 import com.kotlinfoundation.koko.domain.model.credit.creditSystemConfig
 import com.kotlinfoundation.koko.domain.usecase.AiGenerationProvider
+import com.kotlinfoundation.koko.growth.analytics.AnalyticsRouter
+import com.kotlinfoundation.koko.growth.analytics.mmp.MmpAnalyticsDestination
+import com.kotlinfoundation.koko.growth.analytics.mmp.MmpConfig
+import com.kotlinfoundation.koko.growth.analytics.mmp.MmpEnvironment
+import com.kotlinfoundation.koko.growth.analytics.mmp.MmpTracker
+import com.kotlinfoundation.koko.growth.experiment.ExperimentEngine
+import com.kotlinfoundation.koko.identity.SessionManager
+import com.kotlinfoundation.koko.monetization.ads.AdRulesEngine
+import com.kotlinfoundation.koko.monetization.entitlement.EntitlementManager
 import com.kotlinfoundation.koko.presentation.screens.account.AccountViewModel
 import com.kotlinfoundation.koko.presentation.screens.creditbalance.CreditBalanceViewModel
+import com.kotlinfoundation.koko.presentation.screens.debug.DebugMenuViewModel
 import com.kotlinfoundation.koko.presentation.screens.gallery.GalleryViewModel
 import com.kotlinfoundation.koko.presentation.screens.generationresult.GenerationResultViewModel
 import com.kotlinfoundation.koko.presentation.screens.home.HomeViewModel
@@ -34,9 +44,11 @@ import com.kotlinfoundation.koko.subscription.api.SubscriptionProviderFactory
 import com.kotlinfoundation.koko.subscription.api.SubscriptionProviderUi
 import com.kotlinfoundation.koko.util.ApplicationScope
 import com.kotlinfoundation.koko.util.Constants
+import com.kotlinfoundation.koko.util.analytics.Analytics
 import com.kotlinfoundation.koko.util.defaultAsyncDispatcher
 import com.kotlinfoundation.koko.util.extensions.nowEpochMillis
 import com.kotlinfoundation.koko.util.isAndroid
+import com.kotlinfoundation.koko.util.isDebug
 import com.kotlinfoundation.koko.util.logging.Logger
 import com.kotlinfoundation.koko.util.logging.NapierLogger
 import com.kotlinfoundation.koko.util.logging.TelegramLogger
@@ -73,8 +85,36 @@ private val dataModule = module {
     // registered later would silently collide with this one.
     single { UserPreferencesImpl(get<PreferencesDataStoreProvider>().providePreferencesDataStore()) } bind UserPreferences::class
 
+    single { SessionManager(get(), { get<UserRepository>() }, get()) }
+    singleOf(::ExperimentEngine)
+    singleOf(::AdRulesEngine)
+    single { EntitlementManager(subscriptionRepository = get(), creditRepository = get(), sessionManager = get()) }
+
+    // Unified MMP Tracking & Analytics Router (Adjust or AppsFlyer)
+    single {
+        MmpConfig(
+            provider = AppConfiguration.MMP_PROVIDER,
+            environment = if (isDebug) MmpEnvironment.SANDBOX else MmpEnvironment.PRODUCTION,
+            isAdRevenueTrackingEnabled = true,
+            adjustAppTokenAndroid = AppConfiguration.ADJUST_APP_TOKEN_ANDROID,
+            adjustAppTokenIos = AppConfiguration.ADJUST_APP_TOKEN_IOS,
+            adjustEventTokens = AppConfiguration.ADJUST_EVENT_TOKENS,
+            appsFlyerDevKey = AppConfiguration.APPSFLYER_DEV_KEY,
+            appsFlyerAppIdIos = AppConfiguration.APPSFLYER_APP_ID_IOS,
+            appsFlyerEventTokens = AppConfiguration.APPSFLYER_EVENT_TOKENS,
+        )
+    }
+    singleOf(::MmpAnalyticsDestination)
+    single {
+        AnalyticsRouter(
+            primaryAnalytics = get<Analytics>(),
+            destinations = listOf(get<MmpAnalyticsDestination>()),
+            isLoggingEnabled = isDebug,
+        )
+    }
+
     // Remote source
-    single { HttpClientFactory.default() }
+    single { HttpClientFactory.default(sessionManager = get()) }
     single(named("aiDirectClient")) { HttpClientFactory.noAuth() }
     single { AiTransport(proxyClient = get(), directClient = get(named("aiDirectClient"))) }
     single { TemporaryFileUploadApiService(HttpClientFactory.fileUpload()) }
@@ -115,7 +155,7 @@ private val dataModule = module {
     } bind SubscriptionProviderUi::class
 
     // Repositories
-    single { UserRepository(get(), get(), get(), get()) }
+    single { UserRepository(get(), get(), get(), get(), get()) }
     single { SubscriptionRepository(get(), get(), get(), get()) }
     single { GenerationRepository(get(), get(), get(), get(), get(), get(), get()) }
 
@@ -134,20 +174,32 @@ private val presentationModule = module {
     viewModelOf(::OnBoardingViewModel)
     viewModelOf(::HomeViewModel)
     viewModelOf(::GalleryViewModel)
-    viewModelOf(::ProfileViewModel)
-    viewModel { (placementId: String?) ->
+    viewModel {
+        ProfileViewModel(
+            userRepository = get(),
+            userPreferences = get(),
+            appUtil = get(),
+            subscriptionRepository = get(),
+        )
+    }
+    viewModel { params ->
         PaywallViewModel(
-            placementId = placementId,
+            placementId = params.values.getOrNull(0) as? String,
             subscriptionRepository = get(),
             creditRepository = get(),
             userRepository = get(),
             featureFlagManager = get(),
+            userPreferences = get(),
+            userGoal = params.values.getOrNull(1) as? String,
+            userBarrier = params.values.getOrNull(2) as? String,
+            userDailyMinutes = params.values.getOrNull(3) as? Int,
         )
     }
     viewModelOf(::AccountViewModel)
     viewModelOf(::SubscriptionsViewModel)
     viewModelOf(::GenerationResultViewModel)
     viewModelOf(::CreditBalanceViewModel)
+    viewModelOf(::DebugMenuViewModel)
 
     // Add new view models below — generate_screen.sh inserts here.
 }

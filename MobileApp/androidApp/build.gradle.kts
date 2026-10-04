@@ -17,7 +17,7 @@ android {
             .toInt()
 
     defaultConfig {
-        applicationId = "com.kotlinfoundation.koko"
+        applicationId = "com.sample.kmp"
         minSdk =
             libs.versions.android.minSdk
                 .get()
