@@ -35,11 +35,6 @@ All gradle commands run from `MobileApp/`.
 # SHA1 (for Firebase later): ./gradlew :androidApp:signingReport
 ```
 
-**JVM Desktop** (fastest way to see the app — no emulator/device):
-```bash
-./gradlew :desktopApp:run
-```
-
 **Web (Wasm/JS)** — dev server, opens in browser:
 ```bash
 ./gradlew :webApp:wasmJsBrowserDevelopmentRun
@@ -56,11 +51,11 @@ Do NOT run iOS builds for routine validation — they are slow. Only when the ch
 `run-the-app` is for a **human** to see the app. When you (the agent) just need to confirm a change is
 sound, do **not** launch it:
 
-- **Compiling is the check.** `:androidApp:assembleDebug` (or `:desktopApp:run` for a one-off visual) is
+- **Compiling is the check.** `:androidApp:assembleDebug` is
   enough. Do **not** auto-install and launch via `adb` and poll for the process to "confirm it works" —
   the launcher Activity is `.AppActivity` (Application class `.AndroidApp`), but detecting it via adb is
   fragile and is a classic retry-loop trap. For behaviour/appearance use the **`verify-ui`** skill.
-- **`run` tasks never exit** (`:desktopApp:run`, `:webApp:wasmJsBrowserDevelopmentRun`, `installDebug`+launch).
+- **`run` tasks never exit** (`:webApp:wasmJsBrowserDevelopmentRun`, `installDebug`+launch).
   A task that hasn't returned is **running, not hung** — start it once (background if you need the shell)
   and stop; do not kill and re-run.
 - **Never run `check` / `build` / `clean build`** to validate — they aggregate every target (incl. iOS) and
@@ -75,7 +70,7 @@ sound, do **not** launch it:
 - Android task with no device → start an emulator (or connect a device) before `installDebug`.
 - Slowest builds are the first one (dependency + JDK download) and iOS — this is expected.
 
-Desktop (`:desktopApp:run`) is the quickest sanity check that the app builds and shows the Home screen.
+Android (`./gradlew :androidApp:assembleDebug`) is the primary check that the app builds.
 
 ## Next
 

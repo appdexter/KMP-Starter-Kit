@@ -47,7 +47,7 @@ When the user asks to "proceed with koko-mobileapp-getting-started" or "get star
    - **Don't loop on Gradle.** Validate with the scoped tasks only — `spotlessCheck`,
      `:shared:jvmTest :shared:testAndroidHostTest`, `:androidApp:assembleDebug`. **Never** the aggregate
      `check` / `build` / `clean build` (they pull in iOS and fail on unrelated cache issues, which looks
-     like a failure and tempts a re-run). A run task like `:desktopApp:run` never returns — that's
+     like a failure and tempts a re-run). A run task like `:webApp:wasmJsBrowserDevelopmentRun` never returns — that's
      running, not hung; don't kill and re-run. `assembleDebug` compiling green is the Android check — don't
      adb-install-and-launch to "confirm it works". See `run-quality-gates`.
    - **Environment Quirk:** If you need to run any `./gradlew` commands and you encounter an error about "different paths to the Android Preferences folder" (ANDROID_PREFS_ROOT vs ANDROID_USER_HOME), always prefix your commands with `unset ANDROID_PREFS_ROOT &&` (e.g., `unset ANDROID_PREFS_ROOT && ./gradlew assembleDebug`).

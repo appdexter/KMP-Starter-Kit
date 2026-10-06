@@ -10,8 +10,7 @@ interface IosAdsDisplayer {
 }
 
 object NoImplIosAdsDisplayer : IosAdsDisplayer {
-    override fun provideInterstitialAdDisplayer(adLoader: FullScreenAdLoader): FullScreenAdDisplayer =
-        NoImplFullScreenAdDisplayer
+    override fun provideInterstitialAdDisplayer(adLoader: FullScreenAdLoader): FullScreenAdDisplayer = NoImplFullScreenAdDisplayer
 
     override fun provideRewardedAdDisplayer(
         adLoader: FullScreenAdLoader,

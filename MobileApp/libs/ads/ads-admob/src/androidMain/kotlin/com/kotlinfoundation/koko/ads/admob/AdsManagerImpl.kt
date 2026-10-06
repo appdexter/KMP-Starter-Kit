@@ -33,14 +33,10 @@ class AdsManagerImpl(
         AndroidAdmobBannerProvider(adPaidEventListener, bannerAdUnitId)
     }
 
-    override fun createInterstitialDisplayer(activity: Any?): FullScreenAdDisplayer {
-        return InterstitialAdDisplayer(activity as? ComponentActivity, interstitialAdLoader)
-    }
+    override fun createInterstitialDisplayer(activity: Any?): FullScreenAdDisplayer = InterstitialAdDisplayer(activity as? ComponentActivity, interstitialAdLoader)
 
     override fun createRewardedDisplayer(
         activity: Any?,
         onRewarded: (AdsRewardItem) -> Unit,
-    ): FullScreenAdDisplayer {
-        return RewardedAdDisplayer(activity as? ComponentActivity, rewardedAdLoader, onRewarded)
-    }
+    ): FullScreenAdDisplayer = RewardedAdDisplayer(activity as? ComponentActivity, rewardedAdLoader, onRewarded)
 }

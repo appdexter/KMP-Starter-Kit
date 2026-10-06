@@ -3,8 +3,6 @@ package com.kotlinfoundation.koko.root
 import com.kotlinfoundation.koko.ads.config.activeAdsModule
 import com.kotlinfoundation.koko.common.BuildConfig
 import com.kotlinfoundation.koko.core.consent.ConsentManager
-import com.kotlinfoundation.koko.presentation.components.ads.AdPaidEventListener
-import com.kotlinfoundation.koko.util.analytics.logAdImpression
 import com.kotlinfoundation.koko.core.navigation.DeepLinkManager
 import com.kotlinfoundation.koko.core.navigation.DeepLinkParser
 import com.kotlinfoundation.koko.data.BackgroundExecutor
@@ -35,6 +33,7 @@ import com.kotlinfoundation.koko.growth.experiment.ExperimentEngine
 import com.kotlinfoundation.koko.identity.SessionManager
 import com.kotlinfoundation.koko.monetization.ads.AdRulesEngine
 import com.kotlinfoundation.koko.monetization.entitlement.EntitlementManager
+import com.kotlinfoundation.koko.presentation.components.ads.AdPaidEventListener
 import com.kotlinfoundation.koko.presentation.screens.account.AccountViewModel
 import com.kotlinfoundation.koko.presentation.screens.creditbalance.CreditBalanceViewModel
 import com.kotlinfoundation.koko.presentation.screens.debug.DebugMenuViewModel
@@ -54,6 +53,7 @@ import com.kotlinfoundation.koko.util.ApplicationScope
 import com.kotlinfoundation.koko.util.Constants
 import com.kotlinfoundation.koko.util.analytics.Analytics
 import com.kotlinfoundation.koko.util.analytics.NoImplAnalytics
+import com.kotlinfoundation.koko.util.analytics.logAdImpression
 import com.kotlinfoundation.koko.util.defaultAsyncDispatcher
 import com.kotlinfoundation.koko.util.extensions.nowEpochMillis
 import com.kotlinfoundation.koko.util.isAndroid

@@ -1,13 +1,12 @@
-# KMPStarterKit — Kotlin + Compose Multiplatform Starter Kit (android, ios, web, desktop)
+# KMPStarterKit — Kotlin + Compose Multiplatform Starter Kit (android, ios, web)
 
-Compose Multiplatform mobile application targeting Android, iOS, Web (WASM), and JVM Desktop.
+Compose Multiplatform mobile application targeting Android, iOS, and Web (WASM).
 
 ## Module Structure
 
 ```
 ├── shared/            # Shared KMP library (commonMain, androidMain, iosMain, webMain, jvmMain)
 ├── androidApp/        # Android Application entry point
-├── desktopApp/        # JVM Desktop entry point
 ├── webApp/            # Wasm/JS browser entry point
 ├── designsystem/      # Reusable UI components library
 ├── libs/
@@ -80,14 +79,9 @@ To run the application on iPhone device/simulator:
 ./gradlew :shared:iosSimulatorArm64Test
 ```
 
-## JVM Desktop
+## Component Previews (JVM)
 
-Run the full Compose Desktop app:
-```bash
-./gradlew :desktopApp:run
-```
-
-To preview design system components, run `designsystem/src/jvmMain/kotlin/Main.kt` from IDE.
+To preview design system components locally without starting an emulator, run `designsystem/src/jvmMain/kotlin/Main.kt` from the IDE.
 
 ## Web (Wasm/JS)
 

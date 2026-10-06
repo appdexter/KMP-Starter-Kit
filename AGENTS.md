@@ -5,7 +5,7 @@
 ## Project Overview
 
 Monorepo with three main parts:
-- **MobileApp/** — Kotlin Compose Multiplatform mobile app (Android, iOS, JVM Desktop, Web/WASM)
+- **MobileApp/** — Kotlin Compose Multiplatform mobile app (Android, iOS, Web/WASM)
 - **Web/** — Firebase Hosting landing page + Cloud Functions backend (Node.js)
 - **Documentation/** — Docusaurus documentation site (git submodule, published at kotlinfoundation.org/kmp-contest-starter-kit-documentation)
 
@@ -22,9 +22,6 @@ MobileApp/
 │   ├── src/main/res/        # Launcher icons, app theme, colors
 │   ├── google-services.json # Firebase config (Android)
 │   └── build.gradle.kts     # applicationId, versionCode/Name, signing, buildTypes
-├── desktopApp/              # JVM Desktop entry point (kotlin("jvm") + Compose Desktop)
-│   ├── src/main/kotlin/     # main.kt — application { Window { App() } }
-│   └── build.gradle.kts     # compose.desktop.application + nativeDistributions (DMG/MSI/DEB)
 ├── webApp/                  # Wasm/JS browser entry point (KMP wasmJs + Compose for Web)
 │   ├── src/wasmJsMain/kotlin/   # main.kt — ComposeViewport { App() }
 │   ├── src/wasmJsMain/resources/ # index.html, styles.css
@@ -115,8 +112,7 @@ keep Wasm and put Firestore behind the Cloud Functions backend this kit already 
 
 **iOS SwiftPM linkage (generic — any SwiftPM-backed dependency).** When the shared framework consumes a Swift Package Manager dependency (today: `kmpnotifier-push-firebase` → `firebase-ios-sdk`/FirebaseMessaging; tomorrow: any other SPM-backed lib), Kotlin 2.4 + embed-and-sign needs the committed `iosApp/KotlinMultiplatformLinkedPackage/` (a generated local Swift package that force-links the SPM products) plus `ENABLE_USER_SCRIPT_SANDBOXING = NO` on the app target. It is a **build-once, commit-once** artifact (portable — no app-specific paths), so generated apps inherit it. **Regenerate ONLY when the SwiftPM dependency/product set changes**, via `XCODEPROJ_PATH="$PWD/iosApp/iosApp.xcodeproj" GRADLE_PROJECT_PATH=":shared" ./gradlew :shared:integrateEmbedAndSign :shared:integrateLinkagePackage` (from `MobileApp/`; both env vars are required), then add the matching Swift package version in Xcode (e.g. `firebase-ios-sdk` exact `12.17.0`) and commit the diff. The per-build `embedAndSignAppleFrameworkForXcode` run-script phase is already wired and is NOT something to run manually. Full guide: `Documentation/docs/production/iOS.md`.
 
-### JVM Desktop
-- Full app: `./gradlew :desktopApp:run` (or `:desktopApp:packageDistributionForCurrentOS` for native installer)
+### Component Previews (JVM)
 - Design-system component preview: run `designsystem/src/jvmMain/kotlin/Main.kt` from IDE
 
 ### Web (Wasm/JS)
@@ -136,7 +132,7 @@ All Gradle commands run from `MobileApp/`.
 These three scoped tasks ARE the whole validation. Do not improvise around them:
 - **Never run the aggregate tasks `check`, `build`, or `clean build`.** They pull in **every** target — including iOS — so an unrelated iOS cache/link failure fails the whole run, which reads as "broken" and tempts a retry loop. They are also far slower. Run only the three scoped gates above (plus the web/iOS compile checks below when relevant).
 - **`assembleDebug` succeeding IS the Android validation.** Do **not** then auto-install + launch via `adb` and poll to "confirm it works" — the launcher Activity is `.AppActivity` (Application class `.AndroidApp`), but guessing/parsing it via adb is fragile and is what spirals into a loop. To see the app actually render, use the `verify-ui` skill (headless PNG) or hand off to the developer to hit Run in the IDE.
-- **Run tasks are long-running and never exit**: `:desktopApp:run`, `:webApp:wasmJsBrowserDevelopmentRun`, `:androidApp:installDebug`+launch. Start once (background if you need the shell back); a task that hasn't returned is **running, not hung** — do not kill and re-run.
+- **Run tasks are long-running and never exit**: `:webApp:wasmJsBrowserDevelopmentRun`, `:androidApp:installDebug`+launch. Start once (background if you need the shell back); a task that hasn't returned is **running, not hung** — do not kill and re-run.
 - **Configuration cache is on** (`org.gradle.configuration-cache=true`). Anything that must run at execution time has to be configuration-cache safe. In particular, **do not add a `commonWebpackConfig { }` block to `webApp/build.gradle.kts`** — it is a Gradle script object reference and cannot be serialized, which fails every `:webApp:wasmJs*` task. Dev-server settings (the AI CORS proxies) live in `webApp/webpack.config.d/*.js` instead.
 - **Android Studio's Build Analyzer reports four "always-run tasks"; ignore them.** They are
   `kmpPartiallyResolvedDependenciesChecker`, one per KMP module, and they come from the AGP KMP
@@ -186,7 +182,7 @@ whenever the pieces are independent** — for any task, not just feature builds:
   concurrent Gradle runs in one checkout just serialize on the daemon lock. Validate **once** after
   merging all subagent output — `spotlessApply`, the scoped gates, and a single
   `recordRoborazziAndroidHostTest` run (it snapshots every `@Preview` in one pass).
-- **Long-running tasks run in the background** — `:desktopApp:run`, the wasm dev server. Don't block
+- **Long-running tasks run in the background** — the wasm dev server. Don't block
   a session waiting on a task that never exits (see Validation guardrails).
 - **Git worktrees** are for genuinely independent workstreams that must not interfere (a risky
   refactor alongside feature work, two large PRs in flight) — each worktree pays a full fresh Gradle

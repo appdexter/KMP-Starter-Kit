@@ -136,7 +136,7 @@ object AppConfiguration {
      */
     val subscriptionProviderFactory get() = activeSubscriptionProviderFactory
 
-    /**
+    /*
      * Google Mobile Ads (AdMob) is completely decoupled and OFF by default.
      * To enable ads, set `ADS_PROVIDER=ADMOB` in `gradle.properties`:
      *

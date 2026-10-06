@@ -14,7 +14,7 @@
 ## A. Prerequisites & first run
 - [ ] **User** — Install JDK 17+ and Android Studio (Android SDK). macOS/iOS: install Xcode.
 - [ ] **Agent** — `sdk.dir=` set in `MobileApp/local.properties` (`run-the-app` skill).
-- [ ] **User** — Run the app (`./gradlew :desktopApp:run`, or Android/Web) from `MobileApp/`.
+- [ ] **User** — Run the app (Android or Web dev server) from `MobileApp/`.
 - [ ] **Validation** — App launches and shows the Home screen on at least one platform.
 
 ## B. Rebrand

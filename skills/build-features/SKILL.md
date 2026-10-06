@@ -138,7 +138,7 @@ Verify each screen you built with the **`verify-ui`** skill *before* handing bac
 ./gradlew spotlessApply
 ```
 Then run the **`run-quality-gates`** skill, and have the developer run the app
-(`./gradlew :desktopApp:run` is fastest) to confirm the features behave.
+(via Android emulator or Web dev server) to confirm the features behave.
 
 ---
 

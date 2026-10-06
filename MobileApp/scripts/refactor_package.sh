@@ -180,7 +180,6 @@ REFACTOR_MODULES=(
   "shared"
   "composeApp"
   "androidApp"
-  "desktopApp"
   "webApp"
   "designsystem"
   "libs/auth/auth-api"
@@ -346,8 +345,6 @@ update_app_name() {
   local current_pkg_id="$1" pkg_path="${1//.//}" f root
   local files=(
     "androidApp/src/main/AndroidManifest.xml"
-    "desktopApp/src/main/kotlin/$pkg_path/Main.kt"
-    "desktopApp/src/main/kotlin/$pkg_path/main.kt"
     "webApp/src/wasmJsMain/resources/index.html"
     "webApp/src/webMain/resources/index.html"
     "shared/src/jvmMain/kotlin/$pkg_path/util/AppUtilImpl.jvm.kt"

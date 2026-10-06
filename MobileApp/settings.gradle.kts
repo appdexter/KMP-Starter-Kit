@@ -38,7 +38,6 @@ plugins {
 
 include(":shared")
 include(":androidApp")
-include(":desktopApp")
 include(":webApp")
 include(":designsystem")
 include(":libs:subscription:subscription-api")

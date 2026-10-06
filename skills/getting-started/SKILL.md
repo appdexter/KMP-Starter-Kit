@@ -59,9 +59,9 @@ Verify: `./scripts/check_env.sh --phase getting-started`.
 
 ### A. Prerequisites & first run
 
-1. **User Action** — Install **JDK 17+** and **Android Studio** (bundles the Android SDK), then add the **Kotlin Multiplatform plugin** (`Settings → Plugins → Marketplace →` "Kotlin Multiplatform") — it's what makes the iOS/Desktop/Web run targets show up, not just Android. macOS-only for iOS: install **Xcode**.
+1. **User Action** — Install **JDK 17+** and **Android Studio** (bundles the Android SDK), then add the **Kotlin Multiplatform plugin** (`Settings → Plugins → Marketplace →` "Kotlin Multiplatform") — it's what makes the iOS/Web run targets show up, not just Android. macOS-only for iOS: install **Xcode**.
 2. **Agent Action** — Ensure `sdk.dir=/path/to/Android/sdk` is set in `MobileApp/local.properties` (see the `run-the-app` skill).
-3. **User Action** — Run the app once. Fastest sanity check is Desktop: `./gradlew :desktopApp:run` from `MobileApp/`. (Android: emulator + `:androidApp:installDebug`; Web: `:webApp:wasmJsBrowserDevelopmentRun`.) Use the `run-the-app` skill for exact commands per platform.
+3. **User Action** — Run the app once. Fastest sanity check is Web: `./gradlew :webApp:wasmJsBrowserDevelopmentRun` from `MobileApp/`, or Android: emulator + `:androidApp:installDebug`. Use the `run-the-app` skill for exact commands per platform.
 4. **Validation** — The app launches and shows the **Home** screen on at least one platform.
 
 ### B. Rebrand to your app
@@ -70,7 +70,7 @@ Verify: `./scripts/check_env.sh --phase getting-started`.
    ```bash
    ./scripts/refactor_package.sh --app-id com.example.newapp --app-name NewApp
    ```
-6. **Validation** — App still builds after the rename (`./gradlew :androidApp:assembleDebug` or `:desktopApp:run`).
+6. **Validation** — App still builds after the rename (`./gradlew :androidApp:assembleDebug`).
 
 ### C. Define the product (grounds everything downstream)
 
