@@ -46,6 +46,15 @@ jobs:
             printf '%s=%s\n' "$key" "$value" >> local.properties
           done
 
+      - name: Ensure mock google-services config exists
+        run: |
+          if [ ! -f androidApp/google-services.json ] && [ -f androidApp/google-services.json.example ]; then
+            cp androidApp/google-services.json.example androidApp/google-services.json
+          fi
+          if [ ! -f iosApp/iosApp/GoogleService-Info.plist ] && [ -f iosApp/iosApp/GoogleService-Info.plist.example ]; then
+            cp iosApp/iosApp/GoogleService-Info.plist.example iosApp/iosApp/GoogleService-Info.plist
+          fi
+
       - name: Spotless check (ktlint)
         run: ./gradlew spotlessCheck
 

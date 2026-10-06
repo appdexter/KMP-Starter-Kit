@@ -14,8 +14,9 @@ log.txt
 CONTRIBUTING.md
 
 
-# Claude Code local settings (machine-specific)
-.claude/settings.local.json
-
 # Roborazzi goldens are local-only (screenshot verification is not a PR gate)
 MobileApp/shared/src/androidHostTest/snapshots/
+
+# Firebase configuration files (contains secrets)
+MobileApp/androidApp/google-services.json
+MobileApp/iosApp/iosApp/GoogleService-Info.plist

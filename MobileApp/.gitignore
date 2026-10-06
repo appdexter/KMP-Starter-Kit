@@ -10,6 +10,8 @@ captures
 .externalNativeBuild
 .cxx
 local.properties
+androidApp/google-services.json
+iosApp/iosApp/GoogleService-Info.plist
 xcuserdata/
 Pods/
 *.jks

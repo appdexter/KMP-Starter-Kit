@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyANqXdSUtrm_BewNNkmY8IeGgsNfIFBur4</string>
+	<string>AIzaSyDummyKeyForTemplateOnly0123456789</string>
 	<key>GCM_SENDER_ID</key>
-	<string>162973849051</string>
+	<string>123456789012</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.sample.kmp</string>
+	<string>com.kotlinfoundation.koko</string>
 	<key>PROJECT_ID</key>
-	<string>kmp-kit</string>
+	<string>your-firebase-project</string>
 	<key>STORAGE_BUCKET</key>
-	<string>kmp-kit.firebasestorage.app</string>
+	<string>your-firebase-project.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:162973849051:ios:56dee5f291979a118e03fe</string>
+	<string>1:123456789012:ios:abcdef0123456789abcdef</string>
 </dict>
 </plist>
