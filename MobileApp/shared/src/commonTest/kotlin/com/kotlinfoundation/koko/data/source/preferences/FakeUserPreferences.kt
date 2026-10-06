@@ -9,6 +9,10 @@ class FakeUserPreferences : UserPreferences {
 
     private val values = mutableMapOf<String, Any>()
 
+    fun putDirect(key: String, value: Any) {
+        values[key] = value
+    }
+
     override suspend fun getString(key: String, defaultValue: String?): String? = values[key] as? String ?: defaultValue
 
     override suspend fun getInt(key: String, defaultValue: Int?): Int? = values[key] as? Int ?: defaultValue

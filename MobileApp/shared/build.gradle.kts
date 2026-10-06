@@ -126,6 +126,15 @@ kotlin {
                 "ADAPTY" -> implementation(projects.libs.subscription.subscriptionAdapty)
                 "REVENUECAT" -> implementation(projects.libs.subscription.subscriptionRevenuecat)
             }
+
+            api(projects.libs.ads.adsApi)
+            val adsProvider =
+                project.findProperty("ADS_PROVIDER")?.toString()?.uppercase()
+                    ?: "NONE"
+            when (adsProvider) {
+                "ADMOB" -> implementation(projects.libs.ads.adsAdmob)
+                else -> implementation(projects.libs.ads.adsNone)
+            }
         }
 
         commonTest.dependencies {
@@ -161,7 +170,6 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.koin.android)
-            implementation(libs.google.admob)
             implementation(libs.android.inappreview)
         }
 

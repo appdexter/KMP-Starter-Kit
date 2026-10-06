@@ -14,8 +14,6 @@ import com.kotlinfoundation.koko.data.source.preferences.PreferencesDataStorePro
 import com.kotlinfoundation.koko.data.source.preferences.PreferencesDataStoreProviderImpl
 import com.kotlinfoundation.koko.growth.analytics.mmp.CompositeAndroidMmpTracker
 import com.kotlinfoundation.koko.growth.analytics.mmp.MmpTracker
-import com.kotlinfoundation.koko.presentation.components.ads.AdsManager
-import com.kotlinfoundation.koko.presentation.components.ads.AdsManagerImpl
 import com.kotlinfoundation.koko.shared.R
 import com.kotlinfoundation.koko.util.analytics.Analytics
 import com.kotlinfoundation.koko.util.analytics.FirebaseAnalyticsImpl
@@ -29,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -51,8 +50,7 @@ internal actual val platformModule: Module = module {
         }
         FeatureFlagManagerImpl(remoteConfig = remoteConfig)
     } bind FeatureFlagManager::class
-    single { FirebaseAnalyticsImpl(firebaseAnalytics = Firebase.analytics) } bind Analytics::class
-    singleOf(::AdsManagerImpl) bind AdsManager::class
+    single(named("platformAnalytics")) { FirebaseAnalyticsImpl(firebaseAnalytics = Firebase.analytics) } bind Analytics::class
     single<MmpTracker> { CompositeAndroidMmpTracker(context = get()) }
 }
 

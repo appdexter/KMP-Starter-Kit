@@ -81,7 +81,6 @@ fun OnBoardingScreen(
                         modifier = Modifier.fillMaxSize(),
                         uiState = uiState,
                         onUiEvent = onUiEvent,
-                        onNavigateToPaywall = { onUiEvent(OnBoardingUiEvent.FinishOnBoarding) },
                     )
                 }
             }

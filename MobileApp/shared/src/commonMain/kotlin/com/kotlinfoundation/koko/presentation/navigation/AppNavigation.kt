@@ -14,12 +14,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import com.kotlinfoundation.koko.core.navigation.DeepLinkManager
 import com.kotlinfoundation.koko.data.repository.UserRepository
 import com.kotlinfoundation.koko.data.source.featureflag.FeatureFlagManager
 import com.kotlinfoundation.koko.data.source.featureflag.getFunnelExperimentConfig
@@ -60,6 +62,8 @@ import com.kotlinfoundation.koko.presentation.screens.subscriptions.Subscription
 import com.kotlinfoundation.koko.root.AppConfiguration
 import com.kotlinfoundation.koko.root.AuthMode
 import com.kotlinfoundation.koko.util.Constants
+import com.kotlinfoundation.koko.util.analytics.Analytics
+import com.kotlinfoundation.koko.util.analytics.logScreenView
 import com.kotlinfoundation.koko.util.extensions.isKeyboardOpen
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -112,6 +116,25 @@ fun AppNavigation() {
     val selectedTopLevelIndex = TOP_LEVEL_ROUTES.keys.indexOf(activeTopLevel).coerceAtLeast(0)
     val bottomNavItems = remember { TOP_LEVEL_ROUTES.values.toList() }
     val isBottomNavVisible = isAtRoot && activeTopLevel != null && !isKeyboardOpen()
+
+    val analytics = koinInject<Analytics>()
+    val deepLinkManager = koinInject<DeepLinkManager>()
+    val currentRoute = navigationState.currentBackstack.lastOrNull()
+    LaunchedEffect(currentRoute) {
+        if (currentRoute != null) {
+            val screenName = currentRoute::class.simpleName ?: currentRoute.toString()
+            analytics.logScreenView(screenName)
+        }
+    }
+
+    LaunchedEffect(navigator) {
+        deepLinkManager.consumePendingEvent()?.let { event ->
+            navigator.navigate(event.route)
+        }
+        deepLinkManager.events.collect { event ->
+            navigator.navigate(event.route)
+        }
+    }
 
     CompositionLocalProvider(LocalNavigator provides navigator) {
         Column(modifier = Modifier.fillMaxSize()) {

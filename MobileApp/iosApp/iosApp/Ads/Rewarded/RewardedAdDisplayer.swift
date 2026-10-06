@@ -5,11 +5,11 @@
 //  Created by Mirzamehdi on 07/03/2025.
 //
 
+#if canImport(GoogleMobileAds)
 import Foundation
 import Shared
 import SwiftUI
 import GoogleMobileAds
-
 
 class RewardedAdDisplayer: NSObject, FullScreenAdDisplayer {
     
@@ -69,3 +69,4 @@ extension RewardedAdDisplayer: FullScreenContentDelegate {
     }
     
 }
+#endif

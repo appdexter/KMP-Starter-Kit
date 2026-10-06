@@ -42,6 +42,8 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>YOUR_DOT_REVERSED_IOS_CLIENT_ID</string>
+          <string>myapp</string>
+          <string>koko</string>
         </array>
       </dict>
     </array>

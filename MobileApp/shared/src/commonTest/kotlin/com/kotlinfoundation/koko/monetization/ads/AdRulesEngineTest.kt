@@ -1,8 +1,12 @@
+@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+
 package com.kotlinfoundation.koko.monetization.ads
 
 import com.kotlinfoundation.koko.data.source.featureflag.FeatureFlagManager
 import com.kotlinfoundation.koko.data.source.preferences.FakeUserPreferences
 import com.kotlinfoundation.koko.identity.SessionManager
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -121,6 +125,76 @@ class AdRulesEngineTest {
 
         // Actions should be 0 now, so threshold not met
         assertFalse(adRulesEngine.canShowAd(placement, currentTimeMillis = 10_001L))
+    }
+
+    @Test
+    fun defaultRules_areInitializedCorrectlyForAllPlacements() {
+        val bannerRule = adRulesEngine.getRule(AdPlacement.BANNER_MAIN)
+        assertTrue(bannerRule.isEnabled)
+        assertEquals(0, bannerRule.minActionThreshold)
+        assertEquals(0L, bannerRule.cooldownSeconds)
+        assertTrue(bannerRule.excludePremium)
+
+        val interstitialRule = adRulesEngine.getRule(AdPlacement.INTERSTITIAL_EXPORT)
+        assertTrue(interstitialRule.isEnabled)
+        assertEquals(2, interstitialRule.minActionThreshold)
+        assertEquals(45L, interstitialRule.cooldownSeconds)
+        assertTrue(interstitialRule.excludePremium)
+
+        val rewardedRule = adRulesEngine.getRule(AdPlacement.REWARDED_UNLOCK)
+        assertTrue(rewardedRule.isEnabled)
+        assertEquals(0, rewardedRule.minActionThreshold)
+        assertEquals(0L, rewardedRule.cooldownSeconds)
+        assertFalse(rewardedRule.excludePremium)
+
+        val appOpenRule = adRulesEngine.getRule(AdPlacement.APP_OPEN)
+        assertTrue(appOpenRule.isEnabled)
+        assertEquals(0, appOpenRule.minActionThreshold)
+        assertEquals(120L, appOpenRule.cooldownSeconds)
+        assertTrue(appOpenRule.excludePremium)
+    }
+
+    @Test
+    fun triggerAdIfAllowed_executesCallbackAndReturnsTrue_whenAllowed() {
+        val placement = AdPlacement.BANNER_MAIN
+        var callbackExecuted = false
+
+        val result = adRulesEngine.triggerAdIfAllowed(placement) {
+            callbackExecuted = true
+        }
+
+        assertTrue(result)
+        assertTrue(callbackExecuted)
+    }
+
+    @Test
+    fun triggerAdIfAllowed_skipsCallbackAndReturnsFalse_whenDisallowed() {
+        featureFlagManager.setBoolean(FeatureFlagManager.Keys.IS_ADS_ENABLED, false)
+        val placement = AdPlacement.BANNER_MAIN
+        var callbackExecuted = false
+
+        val result = adRulesEngine.triggerAdIfAllowed(placement) {
+            callbackExecuted = true
+        }
+
+        assertFalse(result)
+        assertFalse(callbackExecuted)
+    }
+
+    @Test
+    fun recordAdShown_persistsTimestampToUserPreferences_whenScopeProvided() = runTest {
+        val testEngine = AdRulesEngine(
+            sessionManager = sessionManager,
+            featureFlagManager = featureFlagManager,
+            userPreferences = userPreferences,
+            scope = this,
+        )
+        val placement = AdPlacement.BANNER_MAIN
+        testEngine.recordAdShown(placement, timestampMillis = 88888L)
+        runCurrent()
+
+        val stored = userPreferences.getLong("ad_last_shown_${placement.placementKey}")
+        assertEquals(88888L, stored)
     }
 
     private class FakeFeatureFlagManager : FeatureFlagManager {

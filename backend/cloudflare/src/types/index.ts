@@ -42,7 +42,7 @@ export interface UserRecord {
   updated_at: number;
 }
 
-export type WebhookStatus = 'RECEIVED' | 'QUEUED' | 'PROCESSED' | 'FAILED' | 'IGNORED';
+export type WebhookStatus = 'RECEIVED' | 'QUEUED' | 'PROCESSING_DIRECT' | 'PROCESSED' | 'FAILED' | 'IGNORED';
 
 export interface WebhookLogRecord {
   id: string;
@@ -54,7 +54,7 @@ export interface WebhookLogRecord {
   created_at: number;
 }
 
-export type ConversionStatus = 'SENT' | 'FAILED' | 'SKIPPED_DEDUPE';
+export type ConversionStatus = 'SENT' | 'FAILED' | 'SKIPPED_DEDUPE' | 'SKIPPED_CLIENT_HANDLED';
 
 export interface ConversionRecord {
   id: string;

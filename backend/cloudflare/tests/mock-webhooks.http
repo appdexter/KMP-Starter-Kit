@@ -1,0 +1,189 @@
+###############################################################################
+# Koko Cloudflare Backend - Mock Webhooks & Endpoints Test Suite
+# Compatible with VSCode REST Client, JetBrains HTTP Client, and curl
+###############################################################################
+
+@baseUrl = http://localhost:8787
+@revenuecatSecret = dev_rc_secret_12345
+@adaptySecret = dev_adapty_secret_12345
+
+### ===========================================================================
+### 1. HEALTH CHECK
+### ===========================================================================
+# curl -X GET "http://localhost:8787/health"
+GET {{baseUrl}}/health
+Accept: application/json
+
+### ===========================================================================
+### 2. ATTRIBUTION SYNC (From KMP Mobile / Web Client)
+### Syncs advertising click IDs (fbclid, gclid, fbp, fbc) for app_user_id
+### ===========================================================================
+# curl -X POST "http://localhost:8787/api/v1/attribution/sync" \
+#   -H "Content-Type: application/json" \
+#   -d '{"app_user_id":"usr_koko_demo_101","fbclid":"IwAR3TestFbClickId123","gclid":"Cj0KTestGclid456","fbp":"fb.1.1711900000000.1234567890","fbc":"fb.1.1711900000000.IwAR3TestFbClickId123","ip_address":"203.0.113.195","user_agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X)"}'
+POST {{baseUrl}}/api/v1/attribution/sync
+Content-Type: application/json
+
+{
+  "app_user_id": "usr_koko_demo_101",
+  "fbclid": "IwAR3TestFbClickId123",
+  "gclid": "Cj0KTestGclid456",
+  "fbp": "fb.1.1711900000000.1234567890",
+  "fbc": "fb.1.1711900000000.IwAR3TestFbClickId123",
+  "ip_address": "203.0.113.195",
+  "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15"
+}
+
+### ===========================================================================
+### 3. REVENUECAT: INITIAL_PURCHASE (Client Handled)
+### Expected Action: SKIP_CLIENT_HANDLED
+### Saved to D1 conversions table as SKIPPED_CLIENT_HANDLED for audit, no CAPI dispatch
+### ===========================================================================
+# curl -X POST "http://localhost:8787/api/v1/webhooks/revenuecat" \
+#   -H "Authorization: Bearer dev_rc_secret_12345" \
+#   -H "Content-Type: application/json" \
+#   -d '{"api_version":"1.0","event":{"id":"rc_evt_init_001","type":"INITIAL_PURCHASE","app_user_id":"usr_koko_demo_101","product_id":"com.koko.pro.yearly","price":29.99,"price_in_purchased_currency":29.99,"currency":"USD","transaction_id":"tx_rc_init_70001","original_transaction_id":"tx_rc_init_70001","period_type":"NORMAL","purchased_at_ms":1711905000000,"event_timestamp_ms":1711905000000}}'
+POST {{baseUrl}}/api/v1/webhooks/revenuecat
+Authorization: Bearer {{revenuecatSecret}}
+Content-Type: application/json
+
+{
+  "api_version": "1.0",
+  "event": {
+    "id": "rc_evt_init_001",
+    "type": "INITIAL_PURCHASE",
+    "app_user_id": "usr_koko_demo_101",
+    "product_id": "com.koko.pro.yearly",
+    "price": 29.99,
+    "price_in_purchased_currency": 29.99,
+    "currency": "USD",
+    "transaction_id": "tx_rc_init_70001",
+    "original_transaction_id": "tx_rc_init_70001",
+    "period_type": "NORMAL",
+    "purchased_at_ms": 1711905000000,
+    "event_timestamp_ms": 1711905000000
+  }
+}
+
+### ===========================================================================
+### 4. REVENUECAT: RENEWAL (Server-side Conversion)
+### Expected Action: SEND_PURCHASE
+### Deduplicated and dispatched in parallel to Meta CAPI & Google Ads
+### ===========================================================================
+# curl -X POST "http://localhost:8787/api/v1/webhooks/revenuecat" \
+#   -H "Authorization: Bearer dev_rc_secret_12345" \
+#   -H "Content-Type: application/json" \
+#   -d '{"api_version":"1.0","event":{"id":"rc_evt_renew_002","type":"RENEWAL","app_user_id":"usr_koko_demo_101","product_id":"com.koko.pro.yearly","price":29.99,"price_in_purchased_currency":29.99,"currency":"USD","transaction_id":"tx_rc_renew_70002","original_transaction_id":"tx_rc_init_70001","period_type":"NORMAL","purchased_at_ms":1743441000000,"event_timestamp_ms":1743441000000}}'
+POST {{baseUrl}}/api/v1/webhooks/revenuecat
+Authorization: Bearer {{revenuecatSecret}}
+Content-Type: application/json
+
+{
+  "api_version": "1.0",
+  "event": {
+    "id": "rc_evt_renew_002",
+    "type": "RENEWAL",
+    "app_user_id": "usr_koko_demo_101",
+    "product_id": "com.koko.pro.yearly",
+    "price": 29.99,
+    "price_in_purchased_currency": 29.99,
+    "currency": "USD",
+    "transaction_id": "tx_rc_renew_70002",
+    "original_transaction_id": "tx_rc_init_70001",
+    "period_type": "NORMAL",
+    "purchased_at_ms": 1743441000000,
+    "event_timestamp_ms": 1743441000000
+  }
+}
+
+### ===========================================================================
+### 5. REVENUECAT: REFUND (Server-side Conversion)
+### Expected Action: SEND_REFUND
+### ===========================================================================
+POST {{baseUrl}}/api/v1/webhooks/revenuecat
+Authorization: Bearer {{revenuecatSecret}}
+Content-Type: application/json
+
+{
+  "api_version": "1.0",
+  "event": {
+    "id": "rc_evt_refund_003",
+    "type": "REFUND",
+    "app_user_id": "usr_koko_demo_101",
+    "product_id": "com.koko.pro.yearly",
+    "price": 29.99,
+    "price_in_purchased_currency": 29.99,
+    "currency": "USD",
+    "transaction_id": "tx_rc_refund_70003",
+    "original_transaction_id": "tx_rc_init_70001",
+    "period_type": "NORMAL",
+    "purchased_at_ms": 1743500000000,
+    "event_timestamp_ms": 1743500000000
+  }
+}
+
+### ===========================================================================
+### 6. ADAPTY: INITIAL_PURCHASE (Client Handled)
+### Expected Action: SKIP_CLIENT_HANDLED
+### ===========================================================================
+# curl -X POST "http://localhost:8787/api/v1/webhooks/adapty" \
+#   -H "Authorization: Bearer dev_adapty_secret_12345" \
+#   -H "Content-Type: application/json" \
+#   -d '{"adapty_check_event":false,"event_type":"INITIAL_PURCHASE","customer_user_id":"usr_koko_demo_101","profile_id":"prof_adp_901","vendor_product_id":"com.koko.pro.monthly","price_usd":4.99,"price":4.99,"currency":"USD","transaction_id":"tx_adp_init_50001","original_transaction_id":"tx_adp_init_50001","is_in_trial":false,"event_datetime":"2026-10-05T03:00:00.000Z"}'
+POST {{baseUrl}}/api/v1/webhooks/adapty
+Authorization: Bearer {{adaptySecret}}
+Content-Type: application/json
+
+{
+  "adapty_check_event": false,
+  "event_type": "INITIAL_PURCHASE",
+  "customer_user_id": "usr_koko_demo_101",
+  "profile_id": "prof_adp_901",
+  "vendor_product_id": "com.koko.pro.monthly",
+  "price_usd": 4.99,
+  "price": 4.99,
+  "currency": "USD",
+  "transaction_id": "tx_adp_init_50001",
+  "original_transaction_id": "tx_adp_init_50001",
+  "is_in_trial": false,
+  "event_datetime": "2026-10-05T03:00:00.000Z"
+}
+
+### ===========================================================================
+### 7. ADAPTY: SUBSCRIPTION_RENEWED (Server-side Conversion)
+### Expected Action: SEND_PURCHASE
+### ===========================================================================
+# curl -X POST "http://localhost:8787/api/v1/webhooks/adapty" \
+#   -H "Authorization: Bearer dev_adapty_secret_12345" \
+#   -H "Content-Type: application/json" \
+#   -d '{"adapty_check_event":false,"event_type":"SUBSCRIPTION_RENEWED","customer_user_id":"usr_koko_demo_101","profile_id":"prof_adp_901","vendor_product_id":"com.koko.pro.monthly","price_usd":4.99,"price":4.99,"currency":"USD","transaction_id":"tx_adp_renew_50002","original_transaction_id":"tx_adp_init_50001","is_in_trial":false,"event_datetime":"2026-11-05T03:00:00.000Z"}'
+POST {{baseUrl}}/api/v1/webhooks/adapty
+Authorization: Bearer {{adaptySecret}}
+Content-Type: application/json
+
+{
+  "adapty_check_event": false,
+  "event_type": "SUBSCRIPTION_RENEWED",
+  "customer_user_id": "usr_koko_demo_101",
+  "profile_id": "prof_adp_901",
+  "vendor_product_id": "com.koko.pro.monthly",
+  "price_usd": 4.99,
+  "price": 4.99,
+  "currency": "USD",
+  "transaction_id": "tx_adp_renew_50002",
+  "original_transaction_id": "tx_adp_init_50001",
+  "is_in_trial": false,
+  "event_datetime": "2026-11-05T03:00:00.000Z"
+}
+
+### ===========================================================================
+### 8. ADAPTY: WEBHOOK VERIFICATION PING
+### Expected: 200 OK with verification message
+### ===========================================================================
+POST {{baseUrl}}/api/v1/webhooks/adapty
+Authorization: Bearer {{adaptySecret}}
+Content-Type: application/json
+
+{
+  "adapty_check_event": true
+}

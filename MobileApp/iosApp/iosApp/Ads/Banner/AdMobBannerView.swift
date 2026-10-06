@@ -5,10 +5,10 @@
 //  Created by Mirzamehdi on 02/03/2025.
 //
 
+#if canImport(GoogleMobileAds)
 import Foundation
 import SwiftUI
 import GoogleMobileAds
-
 
 struct BannerAdView: UIViewRepresentable {
     
@@ -16,7 +16,6 @@ struct BannerAdView: UIViewRepresentable {
     var onAdLoaded: (() -> Void)?
     var onAdFailedToLoad: (() -> Void)?
 
-    
     func makeUIView(context: Context) -> BannerView {
         let bannerView = BannerView(adSize: AdSizeBanner)
         bannerView.adUnitID = bannerAdUnitId
@@ -58,9 +57,7 @@ struct BannerAdView: UIViewRepresentable {
         func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
             onAdFailedToLoad?()
         }
-
     }
 
 }
-
-
+#endif

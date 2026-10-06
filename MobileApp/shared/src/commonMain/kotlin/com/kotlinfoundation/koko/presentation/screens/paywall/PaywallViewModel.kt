@@ -23,6 +23,10 @@ import com.kotlinfoundation.koko.subscription.api.SubscriptionProviderUser
 import com.kotlinfoundation.koko.util.Constants
 import com.kotlinfoundation.koko.util.Constants.CREDIT_PACK_PRODUCT_ID_PREFIX
 import com.kotlinfoundation.koko.util.UiMessage
+import com.kotlinfoundation.koko.util.analytics.Analytics
+import com.kotlinfoundation.koko.util.analytics.NoImplAnalytics
+import com.kotlinfoundation.koko.util.analytics.logPurchase
+import com.kotlinfoundation.koko.util.analytics.logSubscribe
 import com.kotlinfoundation.koko.util.extensions.isCreditPackProductId
 import com.kotlinfoundation.koko.util.extensions.parseCreditAmountFromProductId
 import com.kotlinfoundation.koko.util.logging.AppLogger
@@ -43,6 +47,7 @@ class PaywallViewModel(
     private val userRepository: UserRepository,
     private val featureFlagManager: FeatureFlagManager,
     private val userPreferences: UserPreferences,
+    private val analytics: Analytics = NoImplAnalytics,
     private val mapper: PaywallUiStateMapper = PaywallUiStateMapper(),
     userGoal: String? = null,
     userBarrier: String? = null,
@@ -119,11 +124,23 @@ class PaywallViewModel(
         } else {
             fetchPackages()
         }
+
+        analytics.logEvent(
+            event = "paywall_view",
+            params = mapOf(
+                "placement_id" to (placementId ?: "default"),
+                "mode" to mode.name.lowercase(),
+            ),
+        )
     }
 
     val remotePaywallPurchaseEventsListener: PurchaseEventsListener =
         object : PurchaseEventsListener {
             override fun onDismiss() {
+                analytics.logEvent(
+                    event = Analytics.EVENT_PAYWALL_DISMISSED,
+                    params = mapOf("placement_id" to (placementId ?: "default")),
+                )
                 _uiState.update { it.copy(isDismissRequired = true) }
             }
 
@@ -202,6 +219,10 @@ class PaywallViewModel(
 
     private fun handleDismissAttempt() = viewModelScope.launch {
         if (userPreferences.hasSeenExitDownsell()) {
+            analytics.logEvent(
+                event = Analytics.EVENT_PAYWALL_DISMISSED,
+                params = mapOf("placement_id" to (placementId ?: "default"), "reason" to "already_seen_downsell"),
+            )
             _uiState.update { it.copy(isDismissRequired = true) }
             return@launch
         }
@@ -209,8 +230,20 @@ class PaywallViewModel(
         val config = featureFlagManager.getFunnelExperimentConfig()
         if (!config.downsellLadder.tier2ExitIntent.enabled) {
             if (config.downsellLadder.tier3MicroCredit.enabled) {
+                analytics.logEvent(
+                    event = "downsell_view",
+                    params = mapOf(
+                        "type" to "micro_credit",
+                        "credits_amount" to config.downsellLadder.tier3MicroCredit.creditsAmount,
+                        "placement_id" to (placementId ?: "default"),
+                    ),
+                )
                 _uiState.update { it.copy(showMicroCreditDownsell = true) }
             } else {
+                analytics.logEvent(
+                    event = Analytics.EVENT_PAYWALL_DISMISSED,
+                    params = mapOf("placement_id" to (placementId ?: "default"), "reason" to "no_downsell_enabled"),
+                )
                 _uiState.update { it.copy(isDismissRequired = true) }
             }
             return@launch
@@ -228,8 +261,20 @@ class PaywallViewModel(
         val remainingSeconds = totalDurationSeconds - elapsedSeconds
 
         if (remainingSeconds <= 0) {
+            analytics.logEvent(
+                event = Analytics.EVENT_PAYWALL_DISMISSED,
+                params = mapOf("placement_id" to (placementId ?: "default"), "reason" to "downsell_expired"),
+            )
             _uiState.update { it.copy(isDismissRequired = true) }
         } else {
+            analytics.logEvent(
+                event = "downsell_view",
+                params = mapOf(
+                    "type" to "exit_intent",
+                    "discount_percent" to config.downsellLadder.tier2ExitIntent.discountPercent,
+                    "placement_id" to (placementId ?: "default"),
+                ),
+            )
             _uiState.update {
                 it.copy(
                     showExitIntentDownsell = true,
@@ -256,6 +301,14 @@ class PaywallViewModel(
     private fun handleClaimDownsell() = viewModelScope.launch {
         countdownJob?.cancel()
         userPreferences.setExitDownsellSeen(true)
+        analytics.logEvent(
+            event = "downsell_claimed",
+            params = mapOf(
+                "type" to "exit_intent",
+                "discount_percent" to _uiState.value.downsellDiscountPercent,
+                "placement_id" to (placementId ?: "default"),
+            ),
+        )
         _uiState.update { it.copy(showExitIntentDownsell = false) }
         buyPackage()
     }
@@ -263,8 +316,30 @@ class PaywallViewModel(
     private fun handleDeclineDownsell() = viewModelScope.launch {
         countdownJob?.cancel()
         userPreferences.setExitDownsellSeen(true)
+        analytics.logEvent(
+            event = "downsell_declined",
+            params = mapOf(
+                "type" to "exit_intent",
+                "placement_id" to (placementId ?: "default"),
+            ),
+        )
         val config = featureFlagManager.getFunnelExperimentConfig()
         val showMicro = config.downsellLadder.tier3MicroCredit.enabled
+        if (showMicro) {
+            analytics.logEvent(
+                event = "downsell_view",
+                params = mapOf(
+                    "type" to "micro_credit",
+                    "credits_amount" to config.downsellLadder.tier3MicroCredit.creditsAmount,
+                    "placement_id" to (placementId ?: "default"),
+                ),
+            )
+        } else {
+            analytics.logEvent(
+                event = Analytics.EVENT_PAYWALL_DISMISSED,
+                params = mapOf("placement_id" to (placementId ?: "default"), "reason" to "declined_downsell"),
+            )
+        }
         _uiState.update {
             it.copy(
                 showExitIntentDownsell = false,
@@ -277,12 +352,40 @@ class PaywallViewModel(
     private fun handleBuyMicroCredit() = viewModelScope.launch {
         _uiState.update { it.copy(showMicroCreditDownsell = false, isLoading = true) }
         val amount = _uiState.value.microCreditAmount
+        analytics.logEvent(
+            event = "downsell_claimed",
+            params = mapOf(
+                "type" to "micro_credit",
+                "credits_amount" to amount,
+                "placement_id" to (placementId ?: "default"),
+            ),
+        )
+        analytics.logPurchase(
+            value = 0.99,
+            currency = "USD",
+            eventId = "micro_credit_$amount",
+            params = mapOf(
+                "product_type" to "micro_credit",
+                "placement_id" to (placementId ?: "default"),
+            ),
+        )
         creditRepository.addCredits(amount)
         AppGlobalUiState.showUiMessage(UiMessage.Resource(Res.string.paywall_msg_credits_added, amount))
         _uiState.update { it.copy(isLoading = false, isDismissRequired = true) }
     }
 
     private fun handleDeclineMicroCredit() {
+        analytics.logEvent(
+            event = "downsell_declined",
+            params = mapOf(
+                "type" to "micro_credit",
+                "placement_id" to (placementId ?: "default"),
+            ),
+        )
+        analytics.logEvent(
+            event = Analytics.EVENT_PAYWALL_DISMISSED,
+            params = mapOf("placement_id" to (placementId ?: "default"), "reason" to "declined_micro_credit"),
+        )
         _uiState.update { it.copy(showMicroCreditDownsell = false, isDismissRequired = true) }
     }
 
@@ -381,6 +484,15 @@ class PaywallViewModel(
             return@launch
         }
         val selected = rawPackages.firstOrNull { it.id == selectedPackageId } ?: return@launch
+        analytics.logEvent(
+            event = "initiate_checkout",
+            params = mapOf(
+                "package_id" to selected.id.value,
+                "price" to selected.price.amount,
+                "currency" to (selected.price.currencyCodeOrSymbol ?: "USD"),
+                "placement_id" to (placementId ?: "default"),
+            ),
+        )
         _uiState.update { it.copy(buyButtonEnabled = false) }
         subscriptionRepository.purchase(selected.id)
             .onSuccess { purchaserInfo ->
@@ -400,12 +512,34 @@ class PaywallViewModel(
         _uiState.update { it.copy(isLoading = true) }
         val productId = productIds.firstOrNull()
         val isCreditPack = productId.isCreditPackProductId()
+        val selected = rawPackages.firstOrNull { it.id.value in productIds }
+        val amount = selected?.price?.amount?.toDouble() ?: 0.0
+        val currency = selected?.price?.currencyCodeOrSymbol ?: "USD"
 
         if (isCreditPack && productId != null) {
+            analytics.logPurchase(
+                value = amount,
+                currency = currency,
+                eventId = productId,
+                params = mapOf(
+                    "product_type" to "credit_pack",
+                    "placement_id" to (placementId ?: "default"),
+                ),
+            )
             onSuccessfulCreditPack(productId)
             _uiState.update { it.copy(isDismissRequired = true, isLoading = false) }
             return@launch
         }
+
+        analytics.logSubscribe(
+            value = amount,
+            currency = currency,
+            eventId = productId,
+            params = mapOf(
+                "product_type" to "subscription",
+                "placement_id" to (placementId ?: "default"),
+            ),
+        )
 
         val premiumSubscription = with(subscriptionRepository) {
             subscriptionProviderUser.asPremiumSubscription()
@@ -421,6 +555,10 @@ class PaywallViewModel(
 
     private fun successfulRestore(subscriptionProviderUser: SubscriptionProviderUser) = viewModelScope.launch {
         AppLogger.d("Successful restoring purchase: $subscriptionProviderUser")
+        analytics.logEvent(
+            event = "restore_purchase_success",
+            params = mapOf("placement_id" to (placementId ?: "default")),
+        )
         _uiState.update { it.copy(isLoading = true) }
         val premiumSubscription =
             with(subscriptionRepository) { subscriptionProviderUser.asPremiumSubscription() }
@@ -434,6 +572,13 @@ class PaywallViewModel(
 
     private fun failedPurchase(error: Throwable) = viewModelScope.launch {
         AppLogger.e("There was an error with purchase: $error")
+        analytics.logEvent(
+            event = "purchase_failed",
+            params = mapOf(
+                "error" to (error.message ?: "unknown"),
+                "placement_id" to (placementId ?: "default"),
+            ),
+        )
         _uiState.update {
             it.copy(
                 buyButtonEnabled = true,

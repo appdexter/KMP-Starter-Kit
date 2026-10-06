@@ -3,6 +3,8 @@ package com.kotlinfoundation.koko.monetization.ads
 import com.kotlinfoundation.koko.data.source.featureflag.FeatureFlagManager
 import com.kotlinfoundation.koko.data.source.preferences.UserPreferences
 import com.kotlinfoundation.koko.identity.SessionManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlin.time.Clock
 
 /**
@@ -12,10 +14,18 @@ class AdRulesEngine(
     private val sessionManager: SessionManager,
     private val featureFlagManager: FeatureFlagManager,
     private val userPreferences: UserPreferences,
+    private val scope: CoroutineScope? = null,
 ) {
     private val rules = mutableMapOf<AdPlacement, AdRule>()
     private val actionCounts = mutableMapOf<AdPlacement, Int>()
     private val lastAdTimes = mutableMapOf<AdPlacement, Long>()
+
+    init {
+        rules[AdPlacement.BANNER_MAIN] = AdRule(isEnabled = true, minActionThreshold = 0, cooldownSeconds = 0L, excludePremium = true)
+        rules[AdPlacement.INTERSTITIAL_EXPORT] = AdRule(isEnabled = true, minActionThreshold = 2, cooldownSeconds = 45L, excludePremium = true)
+        rules[AdPlacement.REWARDED_UNLOCK] = AdRule(isEnabled = true, minActionThreshold = 0, cooldownSeconds = 0L, excludePremium = false)
+        rules[AdPlacement.APP_OPEN] = AdRule(isEnabled = true, minActionThreshold = 0, cooldownSeconds = 120L, excludePremium = true)
+    }
 
     fun setRule(placement: AdPlacement, rule: AdRule) {
         rules[placement] = rule
@@ -35,6 +45,22 @@ class AdRulesEngine(
     ) {
         lastAdTimes[placement] = timestampMillis
         actionCounts[placement] = 0
+        scope?.launch {
+            userPreferences.putLong("ad_last_shown_${placement.placementKey}", timestampMillis)
+        }
+    }
+
+    fun triggerAdIfAllowed(
+        placement: AdPlacement,
+        currentTimeMillis: Long = Clock.System.now().toEpochMilliseconds(),
+        onAllowed: () -> Unit,
+    ): Boolean {
+        if (canShowAd(placement, currentTimeMillis)) {
+            recordAdShown(placement, currentTimeMillis)
+            onAllowed()
+            return true
+        }
+        return false
     }
 
     fun canShowAd(

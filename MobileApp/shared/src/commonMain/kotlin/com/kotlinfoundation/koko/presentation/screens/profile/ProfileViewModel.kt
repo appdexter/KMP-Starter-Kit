@@ -10,6 +10,8 @@ import com.kotlinfoundation.koko.domain.model.User
 import com.kotlinfoundation.koko.domain.model.isFree
 import com.kotlinfoundation.koko.root.AppConfiguration
 import com.kotlinfoundation.koko.util.AppUtil
+import com.kotlinfoundation.koko.util.analytics.Analytics
+import com.kotlinfoundation.koko.util.analytics.NoImplAnalytics
 import com.kotlinfoundation.koko.util.logging.AppLogger
 import com.mmk.kmpauth.core.auth.KMPAuthRecentLoginRequiredException
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +30,7 @@ class ProfileViewModel private constructor(
     private val subscriptionRepository: SubscriptionRepository?,
     currentUserFlowOverride: Flow<Result<User>>?,
     private val deleteAccountAction: (suspend () -> Result<Unit>)?,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     constructor(
@@ -35,6 +38,7 @@ class ProfileViewModel private constructor(
         userPreferences: UserPreferences,
         appUtil: AppUtil,
         subscriptionRepository: SubscriptionRepository,
+        analytics: Analytics = NoImplAnalytics,
     ) : this(
         userRepository = userRepository,
         userPreferences = userPreferences,
@@ -42,6 +46,7 @@ class ProfileViewModel private constructor(
         subscriptionRepository = subscriptionRepository,
         currentUserFlowOverride = null,
         deleteAccountAction = null,
+        analytics = analytics,
     )
 
     internal constructor(
@@ -50,6 +55,7 @@ class ProfileViewModel private constructor(
         currentUserFlowOverride: Flow<Result<User>>,
         deleteAccountAction: (suspend () -> Result<Unit>)? = null,
         subscriptionRepository: SubscriptionRepository? = null,
+        analytics: Analytics = NoImplAnalytics,
     ) : this(
         userRepository = null,
         userPreferences = userPreferences,
@@ -57,6 +63,7 @@ class ProfileViewModel private constructor(
         subscriptionRepository = subscriptionRepository,
         currentUserFlowOverride = currentUserFlowOverride,
         deleteAccountAction = deleteAccountAction,
+        analytics = analytics,
     )
 
     private var lastTapTimeMark = TimeSource.Monotonic.markNow()
@@ -123,6 +130,7 @@ class ProfileViewModel private constructor(
     }
 
     fun onConfirmDeleteAccount() = viewModelScope.launch {
+        analytics.logEvent("delete_account_confirmed")
         _uiState.update { it.copy(deleteUserDialogShown = false, isLoading = true) }
         val result = deleteAccountAction?.invoke() ?: userRepository?.deleteAccount() ?: Result.success(Unit)
         result.onSuccess {
@@ -141,6 +149,7 @@ class ProfileViewModel private constructor(
     fun onUiEvent(event: ProfileScreenUiEvent) = viewModelScope.launch {
         when (event) {
             ProfileScreenUiEvent.OnClickDeleteAccount -> {
+                analytics.logEvent("delete_account_requested")
                 _uiState.update { it.copy(deleteUserDialogShown = true) }
             }
 
@@ -160,6 +169,7 @@ class ProfileViewModel private constructor(
                 }
 
                 if (versionTapCount >= 5) {
+                    analytics.logEvent("dev_mode_unlocked")
                     userPreferences.putBoolean(UserPreferences.Keys.KEY_IS_DEV_MODE_ENABLED, true)
                     versionTapCount = 0
                     _uiState.update {

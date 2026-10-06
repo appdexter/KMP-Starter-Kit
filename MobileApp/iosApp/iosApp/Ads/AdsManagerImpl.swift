@@ -5,6 +5,7 @@
 //  Created by Mirzamehdi on 02/03/2025.
 //
 
+#if canImport(GoogleMobileAds)
 import Foundation
 import Shared
 import GoogleMobileAds
@@ -18,3 +19,4 @@ class AdsManagerImpl: AdsManager {
         MobileAds.shared.start(completionHandler: nil)
     }
 }
+#endif

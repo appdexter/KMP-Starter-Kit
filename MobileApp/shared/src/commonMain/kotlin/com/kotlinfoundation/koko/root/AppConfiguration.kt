@@ -135,6 +135,16 @@ object AppConfiguration {
      * resolves to whichever one is linked. Do NOT name a concrete provider here.
      */
     val subscriptionProviderFactory get() = activeSubscriptionProviderFactory
+
+    /**
+     * Google Mobile Ads (AdMob) is completely decoupled and OFF by default.
+     * To enable ads, set `ADS_PROVIDER=ADMOB` in `gradle.properties`:
+     *
+     *   ADS_PROVIDER=ADMOB
+     *
+     * If left as `ADS_PROVIDER=NONE` (default), zero ad SDKs are linked, keeping
+     * the app binary clean and avoiding unnecessary store privacy disclosures.
+     */
 }
 
 enum class AuthMode {

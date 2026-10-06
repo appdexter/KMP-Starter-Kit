@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.kotlinfoundation.koko.core.navigation.DeepLinkManager
 import com.kotlinfoundation.koko.root.App
 import com.kotlinfoundation.koko.root.AppInitializer
 import com.mmk.kmpnotifier.KMPNotifier
@@ -35,11 +36,17 @@ class AppActivity : ComponentActivity() {
         setContent { App() }
         KMPNotifier.onCreateOrOnNewIntent(intent)
         FileKit.init(this)
+        intent?.data?.toString()?.let { uri ->
+            DeepLinkManager.onDeepLinkReceived(uri)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         KMPNotifier.onCreateOrOnNewIntent(intent)
+        intent.data?.toString()?.let { uri ->
+            DeepLinkManager.onDeepLinkReceived(uri)
+        }
     }
 }
 

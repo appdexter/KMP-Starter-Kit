@@ -7,11 +7,21 @@ import { processSingleSubscriptionMessage } from '../queue/consumer.js';
 export const webhooksRouter = new Hono<{ Bindings: Env }>();
 
 /**
- * Validates bearer or plain token from Authorization or custom header
+ * Validates bearer or plain token from Authorization or custom header.
+ * Flexible authentication:
+ * - If secret is set: strictly enforces token match.
+ * - If secret is NOT set:
+ *   - Production: logs warning and rejects for security.
+ *   - Non-production / dev: logs warning and allows request for frictionless testing.
  */
-function isAuthorized(expectedSecret: string | undefined, authHeader: string | undefined): boolean {
+function isAuthorized(expectedSecret: string | undefined, authHeader: string | undefined, env?: Env): boolean {
   if (!expectedSecret || expectedSecret.trim() === '') {
-    // If no secret configured in environment, allow or warn in non-prod
+    const isProd = env?.ENVIRONMENT?.toLowerCase() === 'production';
+    if (isProd) {
+      console.warn('[Webhook Auth] WARNING: Webhook secret is not configured in production environment. Rejecting request.');
+      return false;
+    }
+    console.warn('[Webhook Auth] Notice: Webhook secret is not configured. Permitting request in non-production environment.');
     return true;
   }
   if (!authHeader) {
@@ -30,7 +40,7 @@ webhooksRouter.post('/revenuecat', async (c) => {
   const authHeader = c.req.header('authorization') || c.req.header('x-revenuecat-secret');
 
   // Verify authentication
-  if (!isAuthorized(env.WEBHOOK_SECRET_REVENUECAT, authHeader)) {
+  if (!isAuthorized(env.WEBHOOK_SECRET_REVENUECAT, authHeader, env)) {
     return c.json({ error: 'Unauthorized: Invalid RevenueCat webhook secret' }, 401);
   }
 
@@ -124,7 +134,7 @@ webhooksRouter.post('/adapty', async (c) => {
   const authHeader = c.req.header('authorization') || c.req.header('adapty-auth-token') || c.req.header('x-adapty-secret');
 
   // Verify authentication
-  if (!isAuthorized(env.WEBHOOK_SECRET_ADAPTY, authHeader)) {
+  if (!isAuthorized(env.WEBHOOK_SECRET_ADAPTY, authHeader, env)) {
     return c.json({ error: 'Unauthorized: Invalid Adapty webhook secret' }, 401);
   }
 

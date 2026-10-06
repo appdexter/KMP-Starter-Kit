@@ -12,14 +12,24 @@ description: >-
 Ads are **off by default**. This skill turns them on and places the three supported ad types. All
 manual — AdMob console + a few config + code edits. Gradle commands run from `MobileApp/`.
 
-## 1. Flip the feature flag
+## 1. Select the Ads Provider in `gradle.properties`
+
+In `MobileApp/gradle.properties`, switch `ADS_PROVIDER` from `NONE` to `ADMOB`:
+
+```properties
+ADS_PROVIDER=ADMOB
+```
+
+This compiles the `libs/ads/ads-admob` module into the app binary, linking the Google Mobile Ads SDK and its manifest declarations. When set to `NONE` (default), zero ad SDKs are linked.
+
+## 2. Flip the feature flag
 
 Set `IS_ADS_ENABLED` to `true` in `data/source/featureflag/FeatureFlagManager.kt`. It's a feature
 flag, so you can also toggle it remotely via **Firebase Remote Config** (key `is_ads_enabled`) without
 shipping a build. While ads are disabled, `rememberInterstitialAdDisplayer()` /
 `rememberRewardedAdDisplayer()` return `null` — that's expected.
 
-## 2. Ad-unit IDs → `local.properties` (User Action)
+## 3. Ad-unit IDs → `local.properties` (User Action)
 
 These come from the AdMob console — ask the developer to create the app + ad units and paste the IDs;
 they can't be generated locally. **Stop and confirm** (or use Google's test ad unit IDs to try the UI
@@ -43,14 +53,14 @@ ADMOB_REWARDED_AD_ID_IOS=
 
 Create the app + ad units in the [AdMob console](https://apps.admob.com/) (Apps → Add app → Ad units).
 
-## 3. Use test ad IDs during development
+## 4. Use test ad IDs during development
 
 **Do not** hammer your real ad units while developing — clicking your own live ads violates AdMob
 policy and can get the account suspended. Use Google's official
 [sample ad unit IDs](https://developers.google.com/admob/android/test-ads) in `local.properties`
 during dev, and swap in the real IDs only for release builds.
 
-## 4. Place ads
+## 5. Place ads
 
 **Banner** — drop the composable into any screen:
 
@@ -79,7 +89,7 @@ Preload to avoid a wait — inject `AdsManager` (e.g. `koinInject<AdsManager>()`
 `adsManager.rewardedAdLoader.load()` / `adsManager.interstitialAdLoader.load()` ahead of time; both
 loaders are singletons so preloading is safe.
 
-## 5. Store data-safety implications (User Action)
+## 6. Store data-safety implications (User Action)
 
 AdMob collects the **advertising ID** and device/usage data. You must disclose this in store consoles:
 

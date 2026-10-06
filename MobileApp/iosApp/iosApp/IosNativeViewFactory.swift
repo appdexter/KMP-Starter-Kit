@@ -10,7 +10,7 @@ import Shared
 import SwiftUI
 import UIKit
 
-class IosNativeViewFactory: NativeViewFactory{
+class IosNativeViewFactory: NativeViewFactory {
     static var shared = IosNativeViewFactory()
     
     func createSwiftTextView(text: String) -> UIViewController {
@@ -23,12 +23,16 @@ class IosNativeViewFactory: NativeViewFactory{
             onAdLoaded: @escaping () -> Void,
             onAdFailedToLoad: @escaping () -> Void
     ) -> UIViewController {
+#if canImport(GoogleMobileAds)
         let adMobBannerView = BannerAdView(
             bannerAdUnitId: bannerId,
             onAdLoaded: onAdLoaded,
             onAdFailedToLoad: onAdFailedToLoad
         )
         return UIHostingController(rootView: adMobBannerView)
+#else
+        return UIHostingController(rootView: EmptyView())
+#endif
     }
     
 }

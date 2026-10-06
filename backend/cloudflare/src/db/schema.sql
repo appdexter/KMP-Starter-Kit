@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS webhooks_log (
     provider TEXT NOT NULL, -- 'revenuecat' | 'adapty'
     event_type TEXT NOT NULL,
     payload TEXT NOT NULL, -- JSON string
-    status TEXT NOT NULL, -- 'RECEIVED' | 'QUEUED' | 'PROCESSED' | 'FAILED' | 'IGNORED'
+    status TEXT NOT NULL, -- 'RECEIVED' | 'QUEUED' | 'PROCESSING_DIRECT' | 'PROCESSED' | 'FAILED' | 'IGNORED'
     error TEXT,
     created_at INTEGER NOT NULL
 );
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS conversions (
     value REAL,
     currency TEXT,
     event_id TEXT NOT NULL UNIQUE, -- Unique deduplication key (e.g. meta_{txId}_{eventName})
-    status TEXT NOT NULL, -- 'SENT' | 'FAILED' | 'SKIPPED_DEDUPE'
+    status TEXT NOT NULL, -- 'SENT' | 'FAILED' | 'SKIPPED_DEDUPE' | 'SKIPPED_CLIENT_HANDLED'
     error TEXT,
     created_at INTEGER NOT NULL
 );

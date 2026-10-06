@@ -15,6 +15,8 @@ import com.kotlinfoundation.koko.generated.resources.help_and_support
 import com.kotlinfoundation.koko.generated.resources.logout
 import com.kotlinfoundation.koko.generated.resources.subscriptions
 import com.kotlinfoundation.koko.root.AppConfiguration
+import com.kotlinfoundation.koko.util.analytics.Analytics
+import com.kotlinfoundation.koko.util.analytics.NoImplAnalytics
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +28,7 @@ import kotlinx.coroutines.launch
 class AccountViewModel(
     private val userRepository: UserRepository,
     subscriptionRepository: SubscriptionRepository,
+    private val analytics: Analytics = NoImplAnalytics,
 ) : ViewModel() {
 
     private val subscriptionsItem = SettingsItemUiState(
@@ -74,6 +77,7 @@ class AccountViewModel(
     fun onUiEvent(event: AccountUiEvent) = viewModelScope.launch {
         when (event) {
             AccountUiEvent.OnLogoutConfirmClick -> {
+                analytics.logEvent("sign_out")
                 userRepository.logOut()
                 _uiState.update { it.copy(isLogoutDialogVisible = false) }
             }

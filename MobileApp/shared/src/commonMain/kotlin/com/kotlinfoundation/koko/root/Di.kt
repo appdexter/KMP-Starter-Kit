@@ -1,7 +1,14 @@
 package com.kotlinfoundation.koko.root
 
+import com.kotlinfoundation.koko.ads.config.activeAdsModule
 import com.kotlinfoundation.koko.common.BuildConfig
+import com.kotlinfoundation.koko.core.consent.ConsentManager
+import com.kotlinfoundation.koko.presentation.components.ads.AdPaidEventListener
+import com.kotlinfoundation.koko.util.analytics.logAdImpression
+import com.kotlinfoundation.koko.core.navigation.DeepLinkManager
+import com.kotlinfoundation.koko.core.navigation.DeepLinkParser
 import com.kotlinfoundation.koko.data.BackgroundExecutor
+import com.kotlinfoundation.koko.data.repository.AttributionRepository
 import com.kotlinfoundation.koko.data.repository.CreditRepository
 import com.kotlinfoundation.koko.data.repository.GenerationRepository
 import com.kotlinfoundation.koko.data.repository.SubscriptionRepository
@@ -16,6 +23,7 @@ import com.kotlinfoundation.koko.data.source.remote.apiservices.TemporaryFileUpl
 import com.kotlinfoundation.koko.data.source.remote.apiservices.ai.AiTransport
 import com.kotlinfoundation.koko.data.source.remote.apiservices.ai.OpenAiApiService
 import com.kotlinfoundation.koko.data.source.remote.apiservices.ai.ReplicateApiService
+import com.kotlinfoundation.koko.data.source.remote.apiservices.attribution.AttributionApiService
 import com.kotlinfoundation.koko.domain.model.credit.creditSystemConfig
 import com.kotlinfoundation.koko.domain.usecase.AiGenerationProvider
 import com.kotlinfoundation.koko.growth.analytics.AnalyticsRouter
@@ -45,6 +53,7 @@ import com.kotlinfoundation.koko.subscription.api.SubscriptionProviderUi
 import com.kotlinfoundation.koko.util.ApplicationScope
 import com.kotlinfoundation.koko.util.Constants
 import com.kotlinfoundation.koko.util.analytics.Analytics
+import com.kotlinfoundation.koko.util.analytics.NoImplAnalytics
 import com.kotlinfoundation.koko.util.defaultAsyncDispatcher
 import com.kotlinfoundation.koko.util.extensions.nowEpochMillis
 import com.kotlinfoundation.koko.util.isAndroid
@@ -87,7 +96,22 @@ private val dataModule = module {
 
     single { SessionManager(get(), { get<UserRepository>() }, get()) }
     singleOf(::ExperimentEngine)
-    singleOf(::AdRulesEngine)
+    single { ConsentManager(userPreferences = get(), coroutineScope = getOrNull<ApplicationScope>()) }
+    single { DeepLinkParser() }
+    single { DeepLinkManager(parser = get(), attributionRepository = getOrNull()) }
+    single { AdRulesEngine(sessionManager = get(), featureFlagManager = get(), userPreferences = get(), scope = getOrNull<ApplicationScope>()) }
+    includes(activeAdsModule)
+    single<AdPaidEventListener> {
+        val analytics = getOrNull<Analytics>()
+        AdPaidEventListener { revenue, currency, adPlatform, adFormat ->
+            analytics?.logAdImpression(
+                value = revenue,
+                currency = currency,
+                adPlatform = adPlatform,
+                adFormat = adFormat,
+            )
+        }
+    }
     single { EntitlementManager(subscriptionRepository = get(), creditRepository = get(), sessionManager = get()) }
 
     // Unified MMP Tracking & Analytics Router (Adjust or AppsFlyer)
@@ -107,17 +131,19 @@ private val dataModule = module {
     singleOf(::MmpAnalyticsDestination)
     single {
         AnalyticsRouter(
-            primaryAnalytics = get<Analytics>(),
+            primaryAnalytics = getOrNull<Analytics>(named("platformAnalytics")) ?: NoImplAnalytics,
             destinations = listOf(get<MmpAnalyticsDestination>()),
             isLoggingEnabled = isDebug,
         )
     }
+    single<Analytics> { get<AnalyticsRouter>() }
 
     // Remote source
     single { HttpClientFactory.default(sessionManager = get()) }
     single(named("aiDirectClient")) { HttpClientFactory.noAuth() }
     single { AiTransport(proxyClient = get(), directClient = get(named("aiDirectClient"))) }
     single { TemporaryFileUploadApiService(HttpClientFactory.fileUpload()) }
+    single { AttributionApiService(HttpClientFactory.noAuth()) }
 
     factoryOf(::ApiService)
     factoryOf(::OpenAiApiService)
@@ -158,6 +184,7 @@ private val dataModule = module {
     single { UserRepository(get(), get(), get(), get(), get()) }
     single { SubscriptionRepository(get(), get(), get(), get()) }
     single { GenerationRepository(get(), get(), get(), get(), get(), get(), get()) }
+    single { AttributionRepository(get(), get()) }
 
     // Loggers
     factory { TelegramLogger(get(), get(), get()) } bind Logger::class
@@ -180,6 +207,7 @@ private val presentationModule = module {
             userPreferences = get(),
             appUtil = get(),
             subscriptionRepository = get(),
+            analytics = get(),
         )
     }
     viewModel { params ->
@@ -190,6 +218,7 @@ private val presentationModule = module {
             userRepository = get(),
             featureFlagManager = get(),
             userPreferences = get(),
+            analytics = get(),
             userGoal = params.values.getOrNull(1) as? String,
             userBarrier = params.values.getOrNull(2) as? String,
             userDailyMinutes = params.values.getOrNull(3) as? Int,

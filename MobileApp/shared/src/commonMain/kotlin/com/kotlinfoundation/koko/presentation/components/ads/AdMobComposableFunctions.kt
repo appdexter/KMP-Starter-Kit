@@ -3,20 +3,24 @@ package com.kotlinfoundation.koko.presentation.components.ads
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.kotlinfoundation.koko.data.source.featureflag.FeatureFlagManager
+import com.kotlinfoundation.koko.monetization.ads.AdPlacement
+import com.kotlinfoundation.koko.monetization.ads.AdRulesEngine
 import com.kotlinfoundation.koko.util.logging.AppLogger
 import org.koin.compose.koinInject
 
 @Composable
-fun AdmobBanner(modifier: Modifier) {
-    val featureFlagManager = koinInject<FeatureFlagManager>()
+fun AdmobBanner(
+    modifier: Modifier = Modifier,
+    placement: AdPlacement = AdPlacement.BANNER_MAIN,
+) {
+    val adRulesEngine = koinInject<AdRulesEngine>()
 
-    // You can add more condition here, such as if user is premium, don't show any ads
-    val isShowingAdsAllowed =
-        remember { featureFlagManager.getBoolean(FeatureFlagManager.Keys.IS_ADS_ENABLED) }
+    val isShowingAdsAllowed = remember(placement, adRulesEngine) {
+        adRulesEngine.canShowAd(placement)
+    }
 
-    if (isShowingAdsAllowed.not()) {
-        AppLogger.d("Showing Banner Ads is not allowed, ads are disabled")
+    if (!isShowingAdsAllowed) {
+        AppLogger.d("Showing Banner Ads is not allowed by AdRulesEngine for placement: $placement")
         return
     }
 
@@ -24,31 +28,34 @@ fun AdmobBanner(modifier: Modifier) {
 }
 
 @Composable
-fun rememberInterstitialAdDisplayer(): FullScreenAdDisplayer? {
-    val featureFlagManager = koinInject<FeatureFlagManager>()
-    // You can add more condition here, such as if user is premium, don't show any ads
-    val isShowingAdsAllowed =
-        remember { featureFlagManager.getBoolean(FeatureFlagManager.Keys.IS_ADS_ENABLED) }
-
-    if (isShowingAdsAllowed.not()) {
-        AppLogger.d("Showing Interstitial Ads is not allowed, ads are disabled")
-        return null
+fun rememberInterstitialAdDisplayer(
+    placement: AdPlacement = AdPlacement.INTERSTITIAL_EXPORT,
+): FullScreenAdDisplayer {
+    val adRulesEngine = koinInject<AdRulesEngine>()
+    val nativeDisplayer = rememberNativeInterstitialAdDisplayer()
+    return remember(nativeDisplayer, placement, adRulesEngine) {
+        RuleControlledAdDisplayer(
+            delegate = nativeDisplayer,
+            placement = placement,
+            adRulesEngine = adRulesEngine,
+        )
     }
-    return rememberNativeInterstitialAdDisplayer()
 }
 
 @Composable
-fun rememberRewardedAdDisplayer(onRewarded: (AdsRewardItem) -> Unit): FullScreenAdDisplayer? {
-    val featureFlagManager = koinInject<FeatureFlagManager>()
-    // You can add more condition here, such as if user is premium, don't show any ads
-    val isShowingAdsAllowed =
-        remember { featureFlagManager.getBoolean(FeatureFlagManager.Keys.IS_ADS_ENABLED) }
-
-    if (isShowingAdsAllowed.not()) {
-        AppLogger.d("Showing Rewarded Ads is not allowed, ads are disabled")
-        return null
+fun rememberRewardedAdDisplayer(
+    placement: AdPlacement = AdPlacement.REWARDED_UNLOCK,
+    onRewarded: (AdsRewardItem) -> Unit,
+): FullScreenAdDisplayer {
+    val adRulesEngine = koinInject<AdRulesEngine>()
+    val nativeDisplayer = rememberNativeRewardedAdDisplayer(onRewarded)
+    return remember(nativeDisplayer, placement, adRulesEngine) {
+        RuleControlledAdDisplayer(
+            delegate = nativeDisplayer,
+            placement = placement,
+            adRulesEngine = adRulesEngine,
+        )
     }
-    return rememberNativeRewardedAdDisplayer(onRewarded)
 }
 
 @Composable

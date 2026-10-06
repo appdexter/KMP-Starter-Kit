@@ -15,11 +15,39 @@ class FeatureFlagManagerImpl(private val remoteConfig: FirebaseRemoteConfig) : F
             }
     }
 
-    override fun getBoolean(key: String): Boolean = remoteConfig.getBoolean(key)
+    override fun getBoolean(key: String): Boolean {
+        val configValue = remoteConfig.getValue(key)
+        return if (configValue.source == FirebaseRemoteConfig.VALUE_SOURCE_STATIC) {
+            FeatureFlagManager.DEFAULT_VALUES[key] as? Boolean ?: false
+        } else {
+            configValue.asBoolean()
+        }
+    }
 
-    override fun getString(key: String): String = remoteConfig.getString(key)
+    override fun getString(key: String): String {
+        val configValue = remoteConfig.getValue(key)
+        return if (configValue.source == FirebaseRemoteConfig.VALUE_SOURCE_STATIC) {
+            FeatureFlagManager.DEFAULT_VALUES[key] as? String ?: ""
+        } else {
+            configValue.asString()
+        }
+    }
 
-    override fun getLong(key: String): Long = remoteConfig.getLong(key)
+    override fun getLong(key: String): Long {
+        val configValue = remoteConfig.getValue(key)
+        return if (configValue.source == FirebaseRemoteConfig.VALUE_SOURCE_STATIC) {
+            FeatureFlagManager.DEFAULT_VALUES[key] as? Long ?: 0L
+        } else {
+            configValue.asLong()
+        }
+    }
 
-    override fun getDouble(key: String): Double = remoteConfig.getDouble(key)
+    override fun getDouble(key: String): Double {
+        val configValue = remoteConfig.getValue(key)
+        return if (configValue.source == FirebaseRemoteConfig.VALUE_SOURCE_STATIC) {
+            FeatureFlagManager.DEFAULT_VALUES[key] as? Double ?: 0.0
+        } else {
+            configValue.asDouble()
+        }
+    }
 }

@@ -14,7 +14,8 @@ interface Logger {
 // App-wide logging facade: fans every call out to all Logger implementations registered in Koin.
 object AppLogger : Logger, KoinComponent {
 
-    private val loggers = getKoin().getAll<Logger>()
+    private val loggers: List<Logger>
+        get() = runCatching { getKoin().getAll<Logger>() }.getOrDefault(emptyList())
 
     override fun initialize(isDebug: Boolean) {
         loggers.forEach { it.initialize(isDebug) }

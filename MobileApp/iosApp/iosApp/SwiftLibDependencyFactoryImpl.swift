@@ -21,14 +21,16 @@ class SwiftLibDependencyFactoryImpl: SwiftLibDependencyFactory {
     func provideFirebaseAnalyticsImpl() -> any Analytics {
         return FirebaseAnalyticsImpl()
     }
-    
+
+#if canImport(GoogleMobileAds)
     func provideAdsManagerImpl() -> AdsManager {
         return AdsManagerImpl()
     }
-        
+
     func provideIosAdsDisplayer() -> IosAdsDisplayer {
         return IosAdsDisplayerImpl()
     }
+#endif
 
     func provideMmpTracker() -> any MmpTracker {
         return NoImplMmpTracker.shared

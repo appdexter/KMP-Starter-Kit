@@ -22,6 +22,7 @@ import kotlinx.coroutines.IO
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import kotlin.experimental.ExperimentalNativeApi
@@ -36,7 +37,7 @@ internal actual val platformModule: Module = module {
 
 internal fun swiftLibDependenciesModule(factory: SwiftLibDependencyFactory): Module = module {
     single { factory.provideFeatureFlagManagerImpl() } bind FeatureFlagManager::class
-    single { factory.provideFirebaseAnalyticsImpl() } bind Analytics::class
+    single(named("platformAnalytics")) { factory.provideFirebaseAnalyticsImpl() } bind Analytics::class
     single { factory.provideAdsManagerImpl() } bind AdsManager::class
     single { factory.provideIosAdsDisplayer() } bind IosAdsDisplayer::class
     single { factory.provideMmpTracker() } bind MmpTracker::class

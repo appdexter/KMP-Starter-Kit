@@ -1,6 +1,6 @@
 // Cloudflare Queue Consumer for Subscription and Conversion Events
 
-import { Env, SubscriptionQueueMessage, UserRecord } from '../types/index.js';
+import { ConversionStatus, Env, SubscriptionQueueMessage, UserRecord } from '../types/index.js';
 import { sendMetaConversionEvent } from '../services/metaCapi.js';
 import { sendGoogleConversionEvent } from '../services/googleAds.js';
 
@@ -61,7 +61,26 @@ function classifyEvent(
 export async function processSingleSubscriptionMessage(
   payload: SubscriptionQueueMessage,
   env: Env
+): Promise<void>;
+export async function processSingleSubscriptionMessage(
+  env: Env,
+  payload: SubscriptionQueueMessage
+): Promise<void>;
+export async function processSingleSubscriptionMessage(
+  arg1: SubscriptionQueueMessage | Env,
+  arg2: Env | SubscriptionQueueMessage
 ): Promise<void> {
+  let payload: SubscriptionQueueMessage;
+  let env: Env;
+
+  if ('DB' in arg1) {
+    env = arg1 as Env;
+    payload = arg2 as SubscriptionQueueMessage;
+  } else {
+    payload = arg1 as SubscriptionQueueMessage;
+    env = arg2 as Env;
+  }
+
   const { action, metaEventName, googleEventName } = classifyEvent(
     payload.provider,
     payload.eventType
@@ -69,6 +88,13 @@ export async function processSingleSubscriptionMessage(
 
   // Check for ignored events (e.g. CANCELLATION, TEST, EXPIRATION without financial change)
   if (action === 'IGNORE') {
+    try {
+      await env.DB.prepare(
+        `UPDATE webhooks_log SET status = 'IGNORED' WHERE id = ?`
+      ).bind(payload.id).run();
+    } catch {
+      // Ignored if DB is unavailable
+    }
     return;
   }
 
@@ -78,7 +104,7 @@ export async function processSingleSubscriptionMessage(
 
   const dedupeKey = `${payload.provider}_${payload.transactionId}_${payload.eventType.toLowerCase()}`;
 
-  // Handle client-handled initial purchase: record for dedupe record without sending duplicate CAPI
+  // Handle client-handled initial purchase: record for audit trail without sending duplicate CAPI / Google Ads
   if (action === 'SKIP_CLIENT_HANDLED') {
     const checkExisting = await env.DB.prepare(
       'SELECT id FROM conversions WHERE event_id = ? LIMIT 1'
@@ -88,7 +114,7 @@ export async function processSingleSubscriptionMessage(
       const conversionId = crypto.randomUUID();
       await env.DB.prepare(
         `INSERT INTO conversions (id, user_id, event_name, value, currency, event_id, status, error, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'SKIPPED_DEDUPE', 'Client-side handled initial purchase', ?)`
+         VALUES (?, ?, ?, ?, ?, ?, 'SKIPPED_CLIENT_HANDLED', 'Client-side handled initial purchase (audit only)', ?)`
       ).bind(
         conversionId,
         payload.appUserId,
@@ -99,43 +125,67 @@ export async function processSingleSubscriptionMessage(
         Date.now()
       ).run();
     }
+
+    try {
+      await env.DB.prepare(
+        `UPDATE webhooks_log SET status = 'PROCESSED' WHERE id = ?`
+      ).bind(payload.id).run();
+    } catch {
+      // Ignored
+    }
+
     return;
   }
 
-  // Check deduplication in D1 conversions table
+  // Check deduplication in D1 conversions table: if already SENT, skip
   const existingConversion = await env.DB.prepare(
     'SELECT id, status FROM conversions WHERE event_id = ? LIMIT 1'
   ).bind(dedupeKey).first<{ id: string; status: string }>();
 
   if (existingConversion && existingConversion.status === 'SENT') {
     // Event already processed and sent previously
+    try {
+      await env.DB.prepare(
+        `UPDATE webhooks_log SET status = 'PROCESSED' WHERE id = ?`
+      ).bind(payload.id).run();
+    } catch {
+      // Ignored
+    }
     return;
   }
 
-  // Dispatch to Meta Conversions API (CAPI)
-  const metaResult = await sendMetaConversionEvent(env, {
-    eventName: metaEventName,
-    appUserId: payload.appUserId,
-    userRecord: user,
-    transactionId: payload.transactionId,
-    productId: payload.productId,
-    value: payload.price,
-    currency: payload.currency,
-    eventTimestamp: payload.eventTimestamp,
-    actionSource: 'app',
-  });
+  // Dispatch to Meta Conversions API (CAPI) and Google Ads / GA4 MP in parallel
+  const [metaSettled, googleSettled] = await Promise.allSettled([
+    sendMetaConversionEvent(env, {
+      eventName: metaEventName,
+      appUserId: payload.appUserId,
+      userRecord: user,
+      transactionId: payload.transactionId,
+      productId: payload.productId,
+      value: payload.price,
+      currency: payload.currency,
+      eventTimestamp: payload.eventTimestamp,
+      actionSource: 'app',
+    }),
+    sendGoogleConversionEvent(env, {
+      eventName: googleEventName,
+      appUserId: payload.appUserId,
+      userRecord: user,
+      transactionId: payload.transactionId,
+      productId: payload.productId,
+      value: payload.price,
+      currency: payload.currency,
+      eventTimestamp: payload.eventTimestamp,
+    }),
+  ]);
 
-  // Dispatch to Google Ads / GA4 MP
-  const googleResult = await sendGoogleConversionEvent(env, {
-    eventName: googleEventName,
-    appUserId: payload.appUserId,
-    userRecord: user,
-    transactionId: payload.transactionId,
-    productId: payload.productId,
-    value: payload.price,
-    currency: payload.currency,
-    eventTimestamp: payload.eventTimestamp,
-  });
+  const metaResult = metaSettled.status === 'fulfilled'
+    ? metaSettled.value
+    : { success: false, error: metaSettled.reason instanceof Error ? metaSettled.reason.message : String(metaSettled.reason) };
+
+  const googleResult = googleSettled.status === 'fulfilled'
+    ? googleSettled.value
+    : { success: false, error: googleSettled.reason instanceof Error ? googleSettled.reason.message : String(googleSettled.reason) };
 
   // Determine overall status
   const hasErrors = !metaResult.success && !googleResult.success;
@@ -145,7 +195,7 @@ export async function processSingleSubscriptionMessage(
   ].filter(Boolean).join('; ');
 
   const conversionId = existingConversion?.id || crypto.randomUUID();
-  const status = hasErrors ? 'FAILED' : 'SENT';
+  const status: ConversionStatus = hasErrors ? 'FAILED' : 'SENT';
 
   if (existingConversion) {
     await env.DB.prepare(
@@ -166,6 +216,15 @@ export async function processSingleSubscriptionMessage(
       combinedError || null,
       Date.now()
     ).run();
+  }
+
+  // Update webhook log audit status
+  try {
+    await env.DB.prepare(
+      `UPDATE webhooks_log SET status = ?, error = ? WHERE id = ?`
+    ).bind(hasErrors ? 'FAILED' : 'PROCESSED', combinedError || null, payload.id).run();
+  } catch {
+    // Ignored if DB is down
   }
 }
 

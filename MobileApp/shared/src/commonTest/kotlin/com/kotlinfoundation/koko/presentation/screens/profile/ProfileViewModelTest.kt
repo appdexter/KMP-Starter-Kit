@@ -134,4 +134,32 @@ class ProfileViewModelTest {
         advanceUntilIdle()
         assertFalse(viewModel.uiState.value.navigateToDebugMenu)
     }
+
+    @Test
+    fun analyticsEvents_areLoggedOnUserActions() = runTest(mainDispatcher) {
+        val fakeAnalytics = object : com.kotlinfoundation.koko.util.analytics.Analytics {
+            val events = mutableListOf<String>()
+            override fun logEvent(event: String, params: Map<String, Any>?) {
+                events.add(event)
+            }
+            override fun setEnabled(enabled: Boolean) {}
+        }
+
+        val testVm = ProfileViewModel(
+            userPreferences = userPreferences,
+            appUtil = fakeAppUtil,
+            currentUserFlowOverride = userFlow,
+            analytics = fakeAnalytics,
+        )
+
+        testVm.onUiEvent(ProfileScreenUiEvent.OnClickDeleteAccount)
+        advanceUntilIdle()
+        assertTrue(fakeAnalytics.events.contains("delete_account_requested"))
+
+        repeat(5) {
+            testVm.onUiEvent(ProfileScreenUiEvent.OnVersionTapped)
+        }
+        advanceUntilIdle()
+        assertTrue(fakeAnalytics.events.contains("dev_mode_unlocked"))
+    }
 }

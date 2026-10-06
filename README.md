@@ -57,7 +57,7 @@ Documentation: https://kotlinfoundation.org/kmp-contest-starter-kit-documentatio
 - **Storefront screenshot generator** — `./scripts/generate_store_screenshots.sh` renders every `@Preview @StoreScreenshot` composable at App Store / Play Store pixel sizes, ready to upload. The capture is the screen as it renders — no marketing chrome, device frames, or headlines added. No Fastlane / ImageMagick required.
 
 ### Monetization & Growth
-- **[Google AdMob Ads](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/admob-ads)** — Banner, interstitial, and rewarded ads
+- **[Google AdMob Ads](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/admob-ads)** — Banner, interstitial, and rewarded ads (fully modularized & off by default via `ADS_PROVIDER=NONE`; zero SDK bloat or store policy friction when disabled, switchable to `ADMOB`)
 - **[Flexible Credit System](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/credits-system)** — Local credit system with renewable credits
 - **MMP Tracking & Attribution** — Pluggable Adjust and AppsFlyer support with zero-overhead reflection, AdMob ROAS forwarding, and S2S purchase tracking via RevenueCat/Adapty ([Docs/MMP_TRACKING.md](Docs/MMP_TRACKING.md))
 - **No-premium mode** — the default (`AppConfiguration.PREMIUM_FEATURES_ENABLED = false`): no paywall, no subscriptions, credits off, all features free. Flip it to `true` when you add premium features (the app can still be free to download)

@@ -21,7 +21,14 @@ private class InAppReviewManagerImpl(
     private val activity: ComponentActivity?,
 ) : InAppReviewManager {
 
-    private var reviewInfo: ReviewInfo? = null
+    companion object {
+        @Volatile private var cachedReviewInfo: ReviewInfo? = null
+
+        @Volatile private var isPreloading: Boolean = false
+
+        @Volatile private var hasLaunchedReviewInSession: Boolean = false
+    }
+
     private var reviewManager: ReviewManager? = null
 
     init {
@@ -29,19 +36,28 @@ private class InAppReviewManagerImpl(
     }
 
     override fun requestReview() {
-        if (activity == null) return
-        if (reviewInfo != null) launchReviewIfReady() else preloadReviewInfo(showWhenReady = true)
+        if (activity == null || hasLaunchedReviewInSession) return
+        if (cachedReviewInfo != null) {
+            launchReviewIfReady()
+        } else {
+            preloadReviewInfo(showWhenReady = true)
+        }
     }
 
     private fun preloadReviewInfo(showWhenReady: Boolean = false) {
-        if (activity == null || reviewInfo != null) return
+        if (activity == null || cachedReviewInfo != null || isPreloading) return
 
+        isPreloading = true
         reviewManager = ReviewManagerFactory.create(activity.applicationContext)
-        val manager = reviewManager ?: return
+        val manager = reviewManager ?: run {
+            isPreloading = false
+            return
+        }
 
         manager.requestReviewFlow().addOnCompleteListener { task ->
+            isPreloading = false
             if (task.isSuccessful) {
-                reviewInfo = task.result
+                cachedReviewInfo = task.result
                 AppLogger.d("ReviewInfo loaded.")
                 if (showWhenReady) {
                     launchReviewIfReady()
@@ -54,9 +70,11 @@ private class InAppReviewManagerImpl(
 
     private fun launchReviewIfReady() {
         val activity = this.activity ?: return
-        val manager = reviewManager ?: return
-        val info = reviewInfo ?: return
+        if (hasLaunchedReviewInSession) return
+        val info = cachedReviewInfo ?: return
+        val manager = reviewManager ?: ReviewManagerFactory.create(activity.applicationContext)
 
+        hasLaunchedReviewInSession = true
         manager.launchReviewFlow(activity, info).addOnFailureListener { e ->
             AppLogger.e("InApp Review launch failed", e)
         }

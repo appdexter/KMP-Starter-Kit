@@ -1,6 +1,8 @@
 package com.kotlinfoundation.koko.root
 
 import com.kotlinfoundation.koko.common.BuildConfig
+import com.kotlinfoundation.koko.core.consent.ConsentManager
+import com.kotlinfoundation.koko.core.consent.ConsentType
 import com.kotlinfoundation.koko.data.repository.SubscriptionRepository
 import com.kotlinfoundation.koko.data.repository.UserRepository
 import com.kotlinfoundation.koko.data.source.featureflag.FeatureFlagManager
@@ -76,8 +78,10 @@ private fun KoinApplication.refreshFeatureFlags() {
 private fun KoinApplication.initializeAnalytics() {
     val featureFlagManager by this.koin.inject<FeatureFlagManager>()
     val analytics by this.koin.inject<Analytics>()
+    val consentManager by this.koin.inject<ConsentManager>()
     val isAnalyticsEnabled =
-        featureFlagManager.getBoolean(FeatureFlagManager.Keys.IS_ANALYTICS_ENABLED)
+        featureFlagManager.getBoolean(FeatureFlagManager.Keys.IS_ANALYTICS_ENABLED) &&
+            consentManager.hasConsent(ConsentType.ANALYTICS)
     analytics.setEnabled(enabled = isAnalyticsEnabled)
 }
 
@@ -106,7 +110,9 @@ private fun KoinApplication.initializeAds() {
     val backgroundScope = CoroutineScope(defaultAsyncDispatcher)
     val adsManager by this.koin.inject<AdsManager>()
     val featureFlagManager by this.koin.inject<FeatureFlagManager>()
-    val isAdsEnabled = featureFlagManager.getBoolean(FeatureFlagManager.Keys.IS_ADS_ENABLED)
+    val consentManager by this.koin.inject<ConsentManager>()
+    val isAdsEnabled = featureFlagManager.getBoolean(FeatureFlagManager.Keys.IS_ADS_ENABLED) &&
+        consentManager.hasConsent(ConsentType.ADS)
     if (isAdsEnabled.not()) return
 
     // Initialize ads

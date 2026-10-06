@@ -9,8 +9,6 @@ import com.kotlinfoundation.koko.data.source.preferences.PreferencesDataStorePro
 import com.kotlinfoundation.koko.data.source.preferences.PreferencesDataStoreProviderImpl
 import com.kotlinfoundation.koko.growth.analytics.mmp.MmpTracker
 import com.kotlinfoundation.koko.growth.analytics.mmp.NoImplMmpTracker
-import com.kotlinfoundation.koko.presentation.components.ads.AdsManager
-import com.kotlinfoundation.koko.presentation.components.ads.NoImplAdsManager
 import com.kotlinfoundation.koko.util.analytics.Analytics
 import com.kotlinfoundation.koko.util.analytics.NoImplAnalytics
 import com.kotlinfoundation.koko.util.file.FileManager
@@ -24,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -34,8 +33,7 @@ internal actual val platformModule: Module = module {
     factory<FileManager> { FileManagerImpl() }
     factoryOf(::AppUtilImpl) bind AppUtil::class
     single { NoImplFeatureFlagManager } bind FeatureFlagManager::class
-    single { NoImplAnalytics } bind Analytics::class
-    single { NoImplAdsManager } bind AdsManager::class
+    single(named("platformAnalytics")) { NoImplAnalytics } bind Analytics::class
     single<MmpTracker> { NoImplMmpTracker }
 }
 
