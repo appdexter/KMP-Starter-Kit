@@ -1,6 +1,6 @@
-# Koko — KMPStarterKit
+# KMP Application Platform — Production Engineering Manual
 
-> **Koko** is the app name; the project is the KMP contest starter kit (KMPStarterKit).
+> **KMP Application Platform** is a production-grade multiplatform architecture for building, scaling, and shipping apps across Android, iOS, and Web (Wasm).
 
 ## Project Overview
 
@@ -400,7 +400,7 @@ Each platform uses its **native** launch screen — no library.
 - Feature folders under `presentation/screens/<feature>/` contain **only** `*Screen.kt`, `*UiState.kt`, `*ViewModel.kt` — never a `*ScreenRoute.kt`.
 
 ### Agent Skills
-Reusable, agent-agnostic skills live in **`skills/<name>/SKILL.md`** (open Agent Skills format; `.claude/skills` symlinks there for Claude Code). Read the matching skill before doing the task — they encode the project-specific steps (commands, file paths, console URLs) so you need neither the docs nor any external CLI. Full index + descriptions: [`skills/README.md`](skills/README.md).
+Reusable, agent-agnostic skills live in **`skills/<name>/SKILL.md`** (open Agent Skills format). Read the matching skill before doing the task — they encode the project-specific steps (commands, file paths, console URLs) so you need neither the docs nor any external CLI. Full index + descriptions: [`skills/README.md`](skills/README.md).
 
 Two layers:
 - **Guides** — one per phase of the developer journey. Each is an ordered checklist whose steps are tagged **Agent Action** / **User Action** / **Validation**; stop at each **User Action** and wait for the developer. Copy the guide's `progress-template.md` to track progress.
@@ -435,12 +435,12 @@ Two layers:
 | 5 · Growth | `skills/growth/` | Analytics/Crashlytics/RemoteConfig, push, onboarding, virality loops |
 
 **Task skills** (grouped by phase):
-- **P1** `new-app`, `build-features`, `run-the-app`, `refactor-package`, `new-screen`, `new-local-model`, `add-api-service`, `save-preferences`, `add-permission`, `new-module`
+- **P1** `new-app`, `kmp-product-engineer`, `build-features`, `run-the-app`, `refactor-package`, `new-screen`, `new-local-model`, `add-api-service`, `save-preferences`, `add-permission`, `new-module`
 - **P2** `configure-environment`, `setup-firebase`, `enable-auth`, `integrate-web-proxy`, `sync-data-firebase`
-- **P3** `generate-app-icons`, `bump-version`, `setup-signing`, `capture-app-screens`, `setup-appstore-connect`, `setup-google-play`, `publish-release`
-- **P4** `design-paywall`, `setup-subscriptions`, `enable-credits`, `enable-ads`
+- **P3** `generate-app-icons`, `bump-version`, `setup-signing`, `capture-app-screens`, `optimize-store-metadata`, `setup-appstore-connect`, `setup-google-play`, `audit-store-readiness`, `publish-release`
+- **P4** `design-paywall`, `paywall-upgrade-cro`, `setup-subscriptions`, `enable-credits`, `enable-ads`, `admob-roas`
 - **P5** `setup-analytics`, `enable-notifications`, `design-onboarding`, `add-virality-loop`
-- **Cross-phase** `verify-ui` (behaviour via headless Compose tests + appearance via a rendered PNG), `run-quality-gates`, `sync-template` (pull template updates into a derived app)
+- **Cross-phase** `kmp-product-engineer` (architectural decision engine & platform fidelity), `verify-ui` (behaviour via headless Compose tests + appearance via a rendered PNG), `run-quality-gates`, `sync-template` (pull platform updates)
 
 ### Screen Generation
 **Whenever the user asks for a new screen, run this from `MobileApp/`** instead of hand-creating files:
@@ -615,7 +615,7 @@ The starter kit features a dynamic, zero-overhead Mobile Measurement Partner (MM
 | Library | Version | Purpose |
 |---------|---------|---------|
 | Kotlin | 2.4.10 | Language |
-| Compose Multiplatform | 1.10.3 | UI framework |
+| Compose Multiplatform | 1.11.1 | UI framework |
 | Android Gradle Plugin | 9.3.1 | Android build tooling (requires Gradle 9.5+) |
 | Gradle | 9.7.1 | Build system |
 | compileSdk | 37 | Android compile SDK (KMPNotifier 2.0 Android artifacts require API 37+; `targetSdk` unchanged) |
@@ -626,7 +626,7 @@ The starter kit features a dynamic, zero-overhead Mobile Measurement Partner (MM
 | Room | 3.0.1 | Local database (KMP — `androidx.room3:*`, plugin id `androidx.room3`) |
 | SQLite | 2.7.0 | `sqlite-bundled` (native) + `sqlite-web` (wasmJs OPFS). **Keep Room and SQLite on the same release train** — they're coupled (Room's generated code targets a specific `androidx.sqlite` API surface), so bump both together, never one alone. |
 | Navigation 3 | 1.1.1 | Navigation (`org.jetbrains.androidx.navigation3` KMP) |
-| Lifecycle ViewModel Navigation 3 | 2.10.0 | Per-NavEntry ViewModel scoping |
+| Lifecycle ViewModel Navigation 3 | 2.11.0 | Per-NavEntry ViewModel scoping |
 | Firebase BOM | 34.18.0 | Analytics, Messaging, Crashlytics, RemoteConfig |
 | Adapty | 3.17.0 | In-app purchases — **default provider** (`adapty-kmp`). Selected via the `SUBSCRIPTION_PROVIDER` gradle property. |
 | RevenueCat | 3.5.1 | In-app purchases — alternate provider (`purchases-kmp` 3.x — bundles purchases-hybrid-common internally; no iOS pod needed). Set `SUBSCRIPTION_PROVIDER=REVENUECAT` to use. |
@@ -638,7 +638,7 @@ The starter kit features a dynamic, zero-overhead Mobile Measurement Partner (MM
 | ktlint | 1.8.0 | Kotlin linter (driven by Spotless) |
 | Roborazzi | 1.72.0 | Screenshot recording / verification |
 | Robolectric | 4.16.1 | Android-on-JVM test runtime for screenshot tests |
-| ComposablePreviewScanner | 0.9.0 | `@Preview` discovery for screenshot pipeline |
+| ComposablePreviewScanner | 0.9.3 | `@Preview` discovery for screenshot pipeline |
 
 ## Code Style
 
@@ -758,11 +758,11 @@ This project is indexed by GitNexus as **kmp-contest-starter-kit** (7963 symbols
 
 | Task | Read this skill file |
 | --- | --- |
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus-cli/SKILL.md` |
+| Understand architecture / "How does X work?" | `skills/gitnexus-exploring/SKILL.md` |
+| Blast radius / "What breaks if I change X?" | `skills/gitnexus-impact-analysis/SKILL.md` |
+| Trace bugs / "Why is X failing?" | `skills/gitnexus-debugging/SKILL.md` |
+| Rename / extract / split / refactor | `skills/gitnexus-refactoring/SKILL.md` |
+| Tools, resources, schema reference | `skills/gitnexus-guide/SKILL.md` |
+| Index, status, clean, wiki CLI commands | `skills/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->

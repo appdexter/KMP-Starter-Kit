@@ -1,142 +1,131 @@
-# Koko — KMPStarterKit
+# KMP Application Platform
 
-**Koko** is the KMP contest starter kit — a Kotlin Multiplatform + Compose Multiplatform boilerplate for building Android and iOS apps with a shared codebase.
+**KMP Application Platform** is a production-grade multiplatform architecture for building, scaling, and shipping high-performance applications across **Android**, **iOS**, and **Web (Wasm)** from a unified Kotlin codebase.
 
-## Getting Started
+---
 
-We have built the KMP Contest Starter Kit (nicknamed Koko) as the fastest way to transform your idea from a production-grade app on Google Play and the App Store. If you are looking to get started with KMP, we recommend that you run through the "KMP Quickstart" at https://kotlinlang.org/docs/multiplatform/quickstart.html and the "Create Your First Compose Multiplatform app" at https://kotlinlang.org/docs/multiplatform/compose-multiplatform-create-first-app.html - and then come back once you have completed both of those. 
+## 🏛️ Project Governance & Architecture Blueprint
 
-To get started with Koko, open this project in Android Studio and type `Proceed with koko-getting-started skill` into the agent's chat panel.
+Before building features or making architectural changes, review the foundational documentation:
 
-Documentation: https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/ 
+- **[Hiến Pháp Kiến Trúc (Docs/CONSTITUTION.md)](Docs/CONSTITUTION.md)** — 7 điều khoản bất biến (MVP-first, Wasm safety, Room 3 local truth, ROAS precision, Edge backend, Native UX fidelity, Tiered quality gates).
+- **[Kế Hoạch Sản Phẩm & PRD (Docs/MVP.md)](Docs/MVP.md)** — Đặc tả chi tiết về năng lực nền tảng, thiết kế dữ liệu, và lộ trình phát triển.
+- **[MMP Tracking & Attribution (Docs/MMP_TRACKING.md)](Docs/MMP_TRACKING.md)** — Hướng dẫn cấu hình Adjust & AppsFlyer zero-overhead reflection, AdMob ROAS forwarding, và S2S In-App Purchase tracking.
+- **[Cloudflare Edge Backend (Docs/CLOUDFLARE_BACKEND.md)](Docs/CLOUDFLARE_BACKEND.md)** — Kiến trúc backend biên Cloudflare Workers + D1 cho webhook, xử lý token, và Server-Side Conversion API (CAPI).
 
-> **Cloning on Windows?** This repo uses git symlinks (`CLAUDE.md`/`GEMINI.md` → `AGENTS.md`,
-> `.claude/skills` → `skills/`). On Windows, clone with symlinks enabled or they become plain text
-> files and AI-agent skill discovery silently breaks: enable **Developer Mode** (Settings → For
-> developers), then `git clone -c core.symlinks=true <repo-url>`. Also note `Documentation/` is a
-> submodule — use `git clone --recurse-submodules` if you want the docs site locally (optional).
+---
 
-## Project Structure
+## 📂 Project Structure
 
 ```
 ├── MobileApp/         # Compose Multiplatform mobile app (Android, iOS, Web, Desktop)
-├── Web/               # Firebase Hosting landing page + Cloud Functions backend
-├── Documentation/     # Docusaurus documentation site (git submodule) — kotlinfoundation.org/kmp-contest-starter-kit-documentation
-├── AiGuidelines/      # AI-assisted development guidelines & agent prompts
-├── skills/            # Agent-agnostic skills (SKILL.md format) for coding agents
-├── .github/           # GitHub Actions workflows + composite actions (PR checks, publish, web build)
-└── AGENTS.md          # Primary AI-agent context file (CLAUDE.md symlinks here)
+│   ├── androidApp/    # Android application module
+│   ├── webApp/        # Web (wasmJs) application module
+│   ├── shared/        # Shared core business logic, Room 3 DB, Koin DI, UI screens
+│   ├── designsystem/  # Shared design system composables and previews
+│   └── iosApp/        # Xcode wrapper project (iosApp.xcodeproj)
+├── Web/               # Landing page (Firebase Hosting) + Cloud Functions AI backend (Node.js)
+├── Docs/              # Hiến pháp kiến trúc, PRD, MMP tracking, Cloudflare backend docs
+├── AiGuidelines/      # Quy chuẩn kỹ thuật (Tech guidelines) và thiết kế vai trò (Role prompts)
+├── skills/            # Vendor-neutral Agent Skills (SKILL.md) chuẩn hóa quy trình phát triển
+├── .github/           # GitHub Actions CI/CD (pr_checks, publish Android Play Store, publish iOS)
+└── AGENTS.md          # Sổ tay bối cảnh kỹ thuật trung tâm (Vendor-neutral Engineering Manual)
 ```
 
-## Features
+---
 
-### Core
-- **[Authentication](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/auth)** — Google & Apple sign-in via Firebase Authentication
-- **[In-App Purchases & Subscriptions](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/inapp-purchases-subscription)** — Adapty (default) and RevenueCat integration (switchable via the `SUBSCRIPTION_PROVIDER` gradle property)
-- **[Push Notifications](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/notifications)** — Firebase Cloud Messaging for Android & iOS
-- **[In-App Review](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/inapp-review)** — Native app rating prompts
-- **[Feature Flags / Remote Config](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/feature-flag)** — Runtime feature toggling via Firebase Remote Config
-- **[Firebase Integration](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/firebase-integration)** — Analytics, Crashlytics, Messaging, Remote Config
+## ⚡ Tech Stack (Production Baseline)
 
-### Data & Networking
-- **[Network](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/network)** — Ktor HTTP client with centralized config, JSON serialization, logging
-- **[Local Storage](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/local-storage)** — Room database for offline persistence
-- **[User Preferences](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/user-preferences)** — Jetpack DataStore Preferences on all targets (file-based on Android/iOS/JVM, `WebLocalStorage` on web)
-- **Runtime Permissions** — [Calf](https://github.com/MohamedRejeb/Calf)-backed `AppPermissionState` API with ready-made helpers for notification, camera, gallery, location, and microphone permissions
-- **Splash Screen** — native launch screen on both platforms (no library): Android `core-splashscreen` theme + iOS declarative `UILaunchScreen`. Rebrand by editing the color/icon (see the *Splash Screen* section in `AGENTS.md`/`CLAUDE.md`)
+- **Language**: Kotlin 2.4.10
+- **UI Framework**: Compose Multiplatform 1.11.1
+- **Platforms**: Android (minSdk 24, compileSdk 37), iOS (16.0+), Web (Wasm), JVM Desktop
+- **Build System**: AGP 9.3.1, Gradle 9.7.1, Gradle Kotlin DSL
+- **Dependency Injection**: Koin 4.2.2
+- **Networking**: Ktor 3.5.2 (Content Negotiation, Kotlinx Serialization, Auth, Logging)
+- **Local Persistence**: Room 3.0.1 (KMP — `sqlite-bundled` on Mobile/Desktop, `sqlite-web` + OPFS on Wasm)
+- **Key-Value Storage**: Jetpack DataStore Preferences 1.3.0-alpha10 (All targets including Web)
+- **Permissions**: Calf 0.13.0 (Camera, Gallery, Notification, Location)
+- **Authentication**: Firebase Authentication + Social Sign-In (Google, Apple, Anonymous)
+- **Monetization**: Adapty 3.17.0 (default) / RevenueCat 3.5.1 + Google AdMob 25.4.0 (with ILR ROAS tracking)
+- **Analytics & Messaging**: Firebase BOM 34.18.0 (Analytics, Crashlytics, Remote Config, FCM Messaging)
+- **Quality Gates**: Spotless 8.10.0 + ktlint 1.8.0, Roborazzi 1.72.0 + ComposablePreviewScanner 0.9.3
 
-### UI & Development
-- **[UI Components](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/ui-components)** — Pre-built design system with reusable Compose components
-- **[Screen Generator](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/screen-generator)** — Bash script to scaffold new screens with boilerplate
-- **[Logging](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/logging)** — Structured logging via Napier
+---
 
-### Quality & Testing
-- **Spotless + ktlint** — Run `./gradlew spotlessApply` to auto-format Kotlin source and Gradle KTS. Enforced on every PR.
-- **Unit & Compose UI tests** — `kotlinx-coroutines-test` for `Flow` / ViewModel tests; `runComposeUiTest` for headless UI tests on JVM. Run via `./gradlew :shared:jvmTest :shared:testAndroidHostTest`.
-- **Screenshot tests (optional, local)** — Roborazzi + ComposablePreviewScanner can snapshot every `@Preview` under `com.kotlinfoundation.koko.*`. Record baselines with `./gradlew :shared:recordRoborazziAndroidHostTest`, then compare with `./gradlew :shared:verifyRoborazziAndroidHostTest`. Goldens are not committed and verification is not part of PR checks.
-- **Storefront screenshot generator** — `./scripts/generate_store_screenshots.sh` renders every `@Preview @StoreScreenshot` composable at App Store / Play Store pixel sizes, ready to upload. The capture is the screen as it renders — no marketing chrome, device frames, or headlines added. No Fastlane / ImageMagick required.
+## 🚀 Getting Started
 
-### Monetization & Growth
-- **[Google AdMob Ads](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/admob-ads)** — Banner, interstitial, and rewarded ads (fully modularized & off by default via `ADS_PROVIDER=NONE`; zero SDK bloat or store policy friction when disabled, switchable to `ADMOB`)
-- **[Flexible Credit System](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/credits-system)** — Local credit system with renewable credits
-- **MMP Tracking & Attribution** — Pluggable Adjust and AppsFlyer support with zero-overhead reflection, AdMob ROAS forwarding, and S2S purchase tracking via RevenueCat/Adapty ([Docs/MMP_TRACKING.md](Docs/MMP_TRACKING.md))
-- **No-premium mode** — the default (`AppConfiguration.PREMIUM_FEATURES_ENABLED = false`): no paywall, no subscriptions, credits off, all features free. Flip it to `true` when you add premium features (the app can still be free to download)
+### 1. Prerequisites
+- **JDK 17+** (JDK 21 recommended)
+- **Android Studio** (latest stable release) with Android SDK API 34/35+
+- **Xcode** (for iOS compilation and simulator runs)
+- Optional: Verify your environment with [KDoctor](https://github.com/Kotlin/kdoctor)
 
-### AI & Backend
-- **[AI Integration](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/ai-integration)** — OpenAI, Replicate, and DALL-E via Firebase Cloud Functions (secure API key handling)
-- **[App Landing Page](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/app-landing-page)** — Pre-built landing page template deployable to Firebase Hosting
+### 2. Environment Configuration
+Copy the template configuration file in `MobileApp/`:
+```bash
+cp MobileApp/local.properties.example MobileApp/local.properties
+```
+Add your Android SDK path and optional API keys (Firebase, AdMob, Adapty/RevenueCat).
 
-### DevOps
-- **[GitHub CI/CD Actions](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/github-ci-cd)** — `pr_checks.yml` runs format/test/screenshot/build gates on every PR; release workflows publish to Play Store and App Store from tag pushes. Workflows live at the repo root in `.github/workflows/`.
-- **[Fastlane](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/production/fastlane)** — Pre-configured lanes for Play Store & App Store publishing
-- **[Scripts](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/features/scripts)** — Helper scripts for package/app-ID refactor, version bumps, keystore generation, module creation, ASO metadata, store-screenshot rendering
-
-## Contributing
-
-We welcome contributions from the community! If you'd like to help improve the Koko template, please review our [Contributing Guidelines](CONTRIBUTING.md) for information on our workflow, code style, and how to submit a Pull Request.
-
-### Production
-- **[Pre-Publishing Checklist](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/production/pre-publishing-checklist)** — Step-by-step checklist for app icons, API keys, signing, and store setup
-- **[Android Production](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/production/android)** — Android keystore and Play Store publishing
-- **[iOS Production](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation/production/iOS)** — App Store publishing and certificate setup
-
-For more details, visit the [full documentation](https://kotlinfoundation.org/kmp-contest-starter-kit-documentation).
-
-## Tech Stack
-
-- **Language**: Kotlin 2.3.20
-- **UI**: Compose Multiplatform 1.10.0
-- **Platforms**: Android, iOS, Web (WASM), JVM Desktop
-- **DI**: Koin 4.2.0-beta2
-- **Networking**: Ktor 3.3.1
-- **Database**: Room 3.0.0-alpha01 (KMP — Android, iOS, JVM, wasmJs via OPFS)
-- **Preferences**: DataStore 1.3.0-alpha09 (all targets, incl. js/wasmJs)
-- **Permissions**: Calf 0.12.0
-- **Auth**: Firebase Authentication
-- **Subscriptions**: Adapty (default) / RevenueCat (switchable)
-- **Quality**: Spotless 8.4.0 + ktlint 1.7.1, Roborazzi 1.60.0 + ComposablePreviewScanner 0.9.0 (screenshot tests)
-
-
-| Project | Details |
-|---------|---------|
-| **MobileApp** | See [MobileApp/README.md](MobileApp/README.md) for setup, build commands, and architecture |
-| **Web** | Firebase Hosting static site + Node.js Cloud Functions |
-
-> **New here? Follow the developer journey.** The [`skills/`](skills/README.md) folder is a phase-by-phase path from a cloned template to a shipped, earning app: **getting-started** (run it locally) → **integrations** → **publishing** → **monetization** → **growth**. Each guide is a checklist you can follow with an AI agent *or* by hand — real commands, paths, and console steps, no external docs needed.
-
-### Prerequisites
-
-- JDK 17+
-- Android SDK (for mobile app)
-- Xcode (for iOS builds)
-- Optional: [KDoctor](https://github.com/Kotlin/kdoctor) to verify environment
-
-> **iOS note:** the shared framework links some native SDKs (e.g. Firebase, via KMPNotifier) through Swift Package Manager. The required Kotlin↔SwiftPM linkage package (`MobileApp/iosApp/KotlinMultiplatformLinkedPackage/`) ships committed, so iOS builds — and apps generated from KMPStarterKit — work out of the box. You only regenerate it when you add or change a SwiftPM-backed dependency. See [iOS production docs › SwiftPM Dependencies & the Linkage Package](Documentation/docs/production/iOS.md).
-
-### Cloning with Documentation Submodule
-
-The `Documentation/` directory is a git submodule. To initialize it when cloning:
+### 3. Run the Application
+All Gradle commands run from the `MobileApp/` directory:
 
 ```bash
-git clone --recurse-submodules <repo-url>
-# Or if already cloned:
-git submodule update --init
+cd MobileApp
+
+# Build & Run Android Debug APK
+./gradlew :androidApp:assembleDebug
+
+# Run Web/Wasm Development Server (DevServer with hot reload)
+./gradlew :webApp:wasmJsBrowserDevelopmentRun
+
+# Preview Design System Components (Desktop JVM)
+# Run designsystem/src/jvmMain/kotlin/Main.kt from your IDE
 ```
 
-## AI-Assisted Development
+For iOS: Open `MobileApp/iosApp/iosApp.xcodeproj` in Xcode and select your target simulator or device.
 
-This project is set up to be AI-ready out of the box — coding agents (Claude Code, Codex, Cursor, Aider, etc.) get the same context the team uses:
+---
 
-- **`AGENTS.md`** — Primary context file following the vendor-neutral [agents.md](https://agents.md) convention, auto-read by Codex, Gemini CLI, Cursor, and others (`CLAUDE.md` is a symlink to it, so Claude Code reads the same file)
-- **`AiGuidelines/tech/`** — Architecture patterns & coding conventions
-- **`AiGuidelines/agents/`** — Specialized role prompts (product designer, UI/UX, paywall, onboarding, etc.)
-- **`AiGuidelines/creative/`** — Animation patterns & easter egg inspiration
-- **`AiGuidelines/project/`** — Product requirements & user flow documentation
-- **`skills/`** — A phase-by-phase **developer journey** as agent-agnostic skills (open `SKILL.md` format): five guides — getting-started → integrations → publishing → monetization → growth — plus the one-job task skills they compose (run the app, new screen/model, Firebase, auth, signing, subscriptions, ads, notifications, …). Each is followable by an AI agent or by hand. Index: [`skills/README.md`](skills/README.md). Claude Code discovers them via the `.claude/skills` symlink; other agents via the Skills section in `AGENTS.md` (Gemini/Cursor/Copilot pointer files included)
-- **Build & test workflows** — All quality gates an agent needs are documented in `AGENTS.md` (Spotless, JVM/Android tests, debug build) and enforced in `.github/workflows/pr_checks.yml`
-- **Scaffolding scripts** — `MobileApp/scripts/generate_screen.sh` and `MobileApp/scripts/make_local.sh` keep agent-generated code consistent with project conventions
-- **Environment config** — copy `MobileApp/local.properties.example` → `local.properties`; `MobileApp/scripts/check_env.sh --phase <phase>` reports which required service keys are still placeholders so the agent can ask for them (the build otherwise defaults them and stays green)
+## 🛠️ Quality Gates & Verification
 
-## License
+Every code change must pass the three scoped quality gates before commit or PR:
 
-Released under the [MIT License](LICENSE) — Copyright (c) 2026 KotlinFoundation.
+```bash
+cd MobileApp
+
+# 1. Code formatting & lint
+./gradlew spotlessCheck
+# Auto-fix lint issues:
+./gradlew spotlessApply
+
+# 2. Shared Unit & Headless Compose UI tests
+./gradlew :shared:jvmTest :shared:testAndroidHostTest
+
+# 3. Android Debug Compilation (validates :shared transitively)
+./gradlew :androidApp:assembleDebug
+```
+
+To capture snapshot previews of UI screens locally (powered by Roborazzi):
+```bash
+./gradlew :shared:recordRoborazziAndroidHostTest
+```
+
+---
+
+## 🧭 Standard Operating Procedures (Agent Skills)
+
+Quy trình phát triển và vận hành sản phẩm được chuẩn hóa thành các **Task Skills** độc lập tại [`skills/`](skills/README.md), có thể thực thi tự động bởi AI Coding Agents hoặc thực hiện thủ công:
+
+- **Kiến trúc & UX**: [`kmp-product-engineer`](skills/kmp-product-engineer/SKILL.md) — Chuẩn hóa state modeling (`ScreenUiState`), Strong Skipping, và UX platform fidelity (iOS swipe-back, Android edge-to-edge).
+- **Tính năng mới**: [`new-screen`](skills/new-screen/SKILL.md), [`new-local-model`](skills/new-local-model/SKILL.md), [`add-api-service`](skills/add-api-service/SKILL.md), [`save-preferences`](skills/save-preferences/SKILL.md).
+- **Thương mại hóa & ROAS**: [`paywall-upgrade-cro`](skills/paywall-upgrade-cro/SKILL.md), [`setup-subscriptions`](skills/setup-subscriptions/SKILL.md), [`admob-roas`](skills/admob-roas/SKILL.md).
+- **Tiền kiểm định & Phát hành**: [`audit-store-readiness`](skills/audit-store-readiness/SKILL.md), [`optimize-store-metadata`](skills/optimize-store-metadata/SKILL.md), [`publish-release`](skills/publish-release/SKILL.md).
+
+Chi tiết toàn bộ quy trình và mục lục tra cứu: xem [`skills/README.md`](skills/README.md) và [`AGENTS.md`](AGENTS.md).
+
+---
+
+## 📄 License
+
+Released under the [MIT License](LICENSE) — Copyright (c) 2026.

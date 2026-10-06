@@ -1,4 +1,4 @@
-# KMPStarterKit — Kotlin + Compose Multiplatform Starter Kit (android, ios, web)
+# Mobile Client — Compose Multiplatform (Android, iOS, Web)
 
 Compose Multiplatform mobile application targeting Android, iOS, and Web (WASM).
 
@@ -71,7 +71,7 @@ Useful commands:
 ## iOS
 
 To run the application on iPhone device/simulator:
-- Open `iosApp/iosApp.xcproject` in Xcode and run standard configuration
+- Open `iosApp/iosApp.xcodeproj` in Xcode and run standard configuration
 - Or use [Kotlin Multiplatform Mobile plugin](https://plugins.jetbrains.com/plugin/14936-kotlin-multiplatform-mobile) for Android Studio
 
 ```bash

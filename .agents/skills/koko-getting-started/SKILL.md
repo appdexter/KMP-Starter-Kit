@@ -45,6 +45,7 @@ Once the KMP app is ready (the getting started skill mentioned above is complete
 
 ### Phase 1: First Run (Local-only)
 - [ ] **[new-app](../../../skills/new-app/SKILL.md)**: Turn a raw idea into a defined product (prd/user_flow/ui_ux + name/id) — the entry point when starting from just an idea.
+- [ ] **[kmp-product-engineer](../../../skills/kmp-product-engineer/SKILL.md)**: Architect features with platform fidelity (iOS swipe-back, Android edge-to-edge), Compose Strong Skipping, and clean state modeling.
 - [ ] **[run-the-app](../../../skills/run-the-app/SKILL.md)**: Build and run the app on Android, Desktop, Web, or iOS.
 - [ ] **[build-features](../../../skills/build-features/SKILL.md)**: Derive and implement the MVP screens + local models from the product docs (tracked in PROGRESS_FEATURES.md).
 - [ ] **[refactor-package](../../../skills/refactor-package/SKILL.md)**: Rebrand the app by renaming package/applicationId/bundle ID and display name.
@@ -67,15 +68,19 @@ Once the KMP app is ready (the getting started skill mentioned above is complete
 - [ ] **[bump-version](../../../skills/bump-version/SKILL.md)**: Increment build versions for Android and iOS simultaneously.
 - [ ] **[setup-signing](../../../skills/setup-signing/SKILL.md)**: Configure release signing and secure key management.
 - [ ] **[capture-app-screens](../../../skills/capture-app-screens/SKILL.md)**: Render your real screens to plain PNGs at App Store / Play Store pixel sizes (plain UI captures, not designed marketing images).
+- [ ] **[optimize-store-metadata](../../../skills/optimize-store-metadata/SKILL.md)**: Optimize Title, Subtitle, 100-char Keywords field, and Short Description for ASO.
 - [ ] **[setup-appstore-connect](../../../skills/setup-appstore-connect/SKILL.md)**: Set up the Apple App Store Connect listing.
 - [ ] **[setup-google-play](../../../skills/setup-google-play/SKILL.md)**: Set up the Google Play Console listing.
+- [ ] **[audit-store-readiness](../../../skills/audit-store-readiness/SKILL.md)**: Pre-flight audit against Apple App Store & Google Play guidelines (Restore Purchases, EULA, Privacy Manifests, Data Safety).
 - [ ] **[publish-release](../../../skills/publish-release/SKILL.md)**: Build and submit final artifacts for review.
 
 ### Phase 4: Monetization
 - [ ] **[design-paywall](../../../skills/design-paywall/SKILL.md)**: Design and implement the subscription/credit paywall UI.
+- [ ] **[paywall-upgrade-cro](../../../skills/paywall-upgrade-cro/SKILL.md)**: Optimize paywall conversion rate (price anchoring, annual vs monthly framing, trial reassurance, trust badges).
 - [ ] **[setup-subscriptions](../../../skills/setup-subscriptions/SKILL.md)**: Integrate Adapty or RevenueCat subscription providers.
 - [ ] **[enable-credits](../../../skills/enable-credits/SKILL.md)**: Implement a credit balance and credit-pack purchase system.
 - [ ] **[enable-ads](../../../skills/enable-ads/SKILL.md)**: Integrate AdMob for banner, interstitial, or rewarded ads.
+- [ ] **[admob-roas](../../../skills/admob-roas/SKILL.md)**: Capture impression-level ad revenue (OnPaidEventListener) and log ad_impression to Firebase for Google Ads tROAS bidding.
 
 ### Phase 5: Growth
 - [ ] **[setup-analytics](../../../skills/setup-analytics/SKILL.md)**: Implement Firebase Analytics, Crashlytics, and Remote Config.
@@ -84,5 +89,7 @@ Once the KMP app is ready (the getting started skill mentioned above is complete
 - [ ] **[add-virality-loop](../../../skills/add-virality-loop/SKILL.md)**: Implement sharing and referral mechanisms.
 
 ### 🛠️ Quality & Maintenance
+- [ ] **[kmp-product-engineer](../../../skills/kmp-product-engineer/SKILL.md)**: Compose performance audits, Strong Skipping, and platform UX fidelity.
 - [ ] **[run-quality-gates](../../../skills/run-quality-gates/SKILL.md)**: Execute lint checks, unit tests, and build validation.
 - [ ] **[verify-ui](../../../skills/verify-ui/SKILL.md)**: Verify a screen's behaviour (headless Compose test) and appearance (render a `@Preview` to a PNG).
+

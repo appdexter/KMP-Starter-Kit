@@ -1,24 +1,21 @@
 # Agent Skills
 
-Vendor-neutral skills for AI coding agents (Claude Code, Codex, Gemini CLI, Cursor, …) working in this repo.
+Vendor-neutral skills for AI coding agents and developers working in this project.
 Each skill is a `<name>/SKILL.md` file in the open [Agent Skills](https://agentskills.io) format:
 YAML frontmatter (`name`, `description`) followed by step-by-step instructions.
 
 The skills are **vendor-neutral** — plain Markdown with real commands, file paths, and console
-URLs; no assistant-specific syntax. Any agent that reads them can run them. Only *discovery* differs
-per tool, so the repo ships a pointer file for each:
+URLs; no assistant-specific syntax. Any agent or human developer can run them.
 
-| Agent | How it finds the skills |
+| Tool / Environment | How it finds the skills |
 |---|---|
-| Claude Code | Auto-discovered — `.claude/skills` symlinks to this folder |
-| Codex | Reads [`AGENTS.md`](../AGENTS.md) (Skills section → this index) |
-| Gemini CLI | Reads `GEMINI.md` (symlinked to `AGENTS.md`) |
+| AI Coding Agents | Reads [`AGENTS.md`](../AGENTS.md) (Skills section → this index) |
 | Cursor | Reads `.cursorrules` (points here) |
 | GitHub Copilot | Reads `.github/copilot-instructions.md` (points here) |
-| Any other / no AI | Open this index and read the matching `SKILL.md` — every step is followable by hand |
+| Human Developer / CLI | Open this index and read the matching `SKILL.md` — every step is followable by hand |
 
 **No AI? Walk them manually.** The skills encode everything you need; you should not have to read
-external docs to get from a cloned template to a shipped, earning app.
+external docs to build, verify, monetize, and ship your production app.
 
 ## Two layers
 
@@ -72,6 +69,7 @@ no-Firebase AI path, so Firebase / Adapty / store accounts wait until the phase 
 | Skill | Use when |
 |---|---|
 | [new-app](new-app/SKILL.md) | Starting from an idea — interview, write the PRD/user-flow/UI docs, pick name + id, record deferred decisions |
+| [kmp-product-engineer](kmp-product-engineer/SKILL.md) | Architecting features with platform fidelity (iOS swipe-back, Android edge-to-edge), Compose Strong Skipping, and clean state modeling |
 | [build-features](build-features/SKILL.md) | Building your app's real features from the PRD (also later: "add streaks to my habit tracker") |
 | [run-the-app](run-the-app/SKILL.md) | Building/running the app on Android, Desktop, Web, or iOS for the first time |
 | [refactor-package](refactor-package/SKILL.md) | Renaming the package / applicationId / bundle ID / display name (rebrand) |
@@ -100,8 +98,10 @@ no-Firebase AI path, so Firebase / Adapty / store accounts wait until the phase 
 | [bump-version](bump-version/SKILL.md) | Bumping versionCode / versionName for a release |
 | [setup-signing](setup-signing/SKILL.md) | Release signing + moving keys out of the app into CI secrets |
 | [capture-app-screens](capture-app-screens/SKILL.md) | Capturing your real screens as plain PNGs at store pixel sizes (no headlines / device frames — this kit has no design step) |
+| [optimize-store-metadata](optimize-store-metadata/SKILL.md) | Optimizing App Store & Google Play metadata (Title, Subtitle, 100-char Keywords field, Short Description) for ASO |
 | [setup-appstore-connect](setup-appstore-connect/SKILL.md) | Creating + configuring the App Store Connect listing |
 | [setup-google-play](setup-google-play/SKILL.md) | Creating + configuring the Google Play Console listing |
+| [audit-store-readiness](audit-store-readiness/SKILL.md) | Pre-flight audit against Apple App Store & Google Play guidelines (Restore Purchases, EULA, Privacy Manifests, Data Safety) |
 | [publish-release](publish-release/SKILL.md) | Building signed artifacts and submitting for review |
 
 **Phase 4 — Monetization**
@@ -109,9 +109,11 @@ no-Firebase AI path, so Firebase / Adapty / store accounts wait until the phase 
 | Skill | Use when |
 |---|---|
 | [design-paywall](design-paywall/SKILL.md) | Authoring the offer / pricing / trial / paywall copy |
+| [paywall-upgrade-cro](paywall-upgrade-cro/SKILL.md) | Optimizing paywall conversion rate (price anchoring, annual vs monthly framing, trial reassurance, trust badges) |
 | [setup-subscriptions](setup-subscriptions/SKILL.md) | Adding subscriptions (Adapty default / RevenueCat) |
 | [enable-credits](enable-credits/SKILL.md) | Adding a credit balance + credit-pack IAPs |
 | [enable-ads](enable-ads/SKILL.md) | Turning on AdMob banner / interstitial / rewarded ads |
+| [admob-roas](admob-roas/SKILL.md) | Capturing impression-level ad revenue (OnPaidEventListener) and logging ad_impression to Firebase for Google Ads tROAS bidding |
 
 **Phase 5 — Growth**
 
@@ -126,6 +128,7 @@ no-Firebase AI path, so Firebase / Adapty / store accounts wait until the phase 
 
 | Skill | Use when |
 |---|---|
+| [kmp-product-engineer](kmp-product-engineer/SKILL.md) | Architectural decision engine, Compose performance audits, and platform UX fidelity |
 | [verify-ui](verify-ui/SKILL.md) | Confirming a screen behaves (headless Compose test, ~2s) and looks right (render a PNG and look at it) |
 | [run-quality-gates](run-quality-gates/SKILL.md) | Validating changes before commit/PR (lint, tests, build) |
 | [sync-template](sync-template/SKILL.md) | Pulling template updates into an app created from this kit (survives the package rename; see `CHANGELOG.md`) |

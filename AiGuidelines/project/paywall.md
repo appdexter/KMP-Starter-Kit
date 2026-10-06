@@ -8,6 +8,7 @@ Fill the `TAILOR PER APP` blanks; the rest are strong defaults.
 > `MobileApp/shared/src/commonMain/kotlin/com/kotlinfoundation/koko/presentation/screens/paywall/`
 > — `SubscriptionPaywallScreen.kt`, `creditpack/CreditPackPaywallScreen.kt`,
 > `remotepaywall/RemotePaywallScreen.kt`, and `PaywallUiStateMapper`.
+> For conversion rate optimization (price anchoring, trial reassurance copy, trust badges), execute the skill **`skills/paywall-upgrade-cro/SKILL.md`**.
 
 ## Primary model
 
