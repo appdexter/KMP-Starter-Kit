@@ -27,6 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Full git history required for mirroring branches & tags
+          persist-credentials: false
 
       - name: Verify Sync Token
         env:
@@ -49,6 +50,9 @@ jobs:
         run: |
           set -e
           echo "Configuring remote for target fork: $TARGET_REPO"
+          
+          # Clean any extraheader to guarantee FORK_SYNC_TOKEN is used instead of GITHUB_TOKEN
+          git config --local --unset-all "http.https://github.com/.extraheader" || true
           
           # Add destination remote with authenticated URL
           git remote add fork "https://x-access-token:${FORK_SYNC_TOKEN}@github.com/${TARGET_REPO}.git"
