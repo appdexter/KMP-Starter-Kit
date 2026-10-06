@@ -1,0 +1,72 @@
+name: Sync to Fork (appdexter/KMP-Starter-Kit)
+
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - '**'
+  workflow_dispatch:
+    inputs:
+      force_push:
+        description: 'Force push to fork'
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: sync-fork-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    name: Mirror Push to Fork
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full git history required for mirroring branches & tags
+
+      - name: Verify Sync Token
+        env:
+          FORK_SYNC_TOKEN: ${{ secrets.FORK_SYNC_TOKEN }}
+        run: |
+          if [ -z "$FORK_SYNC_TOKEN" ]; then
+            echo "::error title=Missing Secret FORK_SYNC_TOKEN::Secret 'FORK_SYNC_TOKEN' is not configured in this repository."
+            echo "To enable auto-syncing to https://github.com/appdexter/KMP-Starter-Kit:"
+            echo "1. Go to GitHub Settings -> Developer settings -> Personal access tokens (classic or fine-grained)."
+            echo "2. Generate a token with 'repo' permissions (write access to appdexter/KMP-Starter-Kit)."
+            echo "3. In this repo (babyskill/kmp-contest-starter-kit), go to Settings -> Secrets and variables -> Actions."
+            echo "4. Add a new repository secret named 'FORK_SYNC_TOKEN' with that token."
+            exit 1
+          fi
+
+      - name: Push to Destination Fork
+        env:
+          FORK_SYNC_TOKEN: ${{ secrets.FORK_SYNC_TOKEN }}
+          TARGET_REPO: "appdexter/KMP-Starter-Kit"
+        run: |
+          set -e
+          echo "Configuring remote for target fork: $TARGET_REPO"
+          
+          # Add destination remote with authenticated URL
+          git remote add fork "https://x-access-token:${FORK_SYNC_TOKEN}@github.com/${TARGET_REPO}.git"
+          
+          # Push current ref (branch or tag)
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "Detected tag push: ${{ github.ref_name }}"
+            git push fork "refs/tags/${{ github.ref_name }}" --force
+          else
+            echo "Syncing main branch to fork..."
+            git push fork main:main --force
+          fi
+          
+          # Sync all tags
+          echo "Syncing all tags to fork..."
+          git push fork --tags --force
+          
+          # Remove remote to avoid leaving token in environment
+          git remote remove fork
+          
+          echo "Successfully synced to https://github.com/${TARGET_REPO}!"
